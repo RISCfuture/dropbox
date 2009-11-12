@@ -51,6 +51,66 @@ describe Dropbox::API do
     end
   end
 
+  describe "#copy" do
+    before :each do
+      @response.stub!(:body).and_return('{"a":"b"}')
+    end
+    
+    it "should call the /fileops/copy API method" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      @session.copy 'source/file', 'dest/file'
+    end
+
+    it "should return the metadata as a struct" do
+      @response.stub!(:body).and_return( { :foo => :bar, :baz => { :hey => :you } }.to_json)
+      @token_mock.stub!(:post).and_return(@response)
+
+      result = @session.copy('a', 'b')
+      result.foo.should eql('bar')
+      result.baz.hey.should eql('you')
+    end
+
+    it "should strip a leading slash from source" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      @session.copy '/source/file', 'dest/file'
+    end
+    
+    it "should strip a leading slash from target" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      @session.copy 'source/file', '/dest/file'
+    end
+
+    it "should set the target file name to the source file name if the target is a directory path" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      @session.copy 'source/file', 'dest/'
+    end
+
+    it "should re-raise 404's as FileNotFoundErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::FileNotFoundError)
+    end
+
+    it "should re-raise 403's as FileExistsErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::FileExistsError)
+    end
+
+    it "should raise other errors unmodified" do
+      @response.stub(:kind_of?).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
   describe "#sandbox?" do
     it "should return true if sandboxed" do
       @session.sandbox = true
@@ -85,12 +145,18 @@ describe Dropbox::API do
     end
   end
 
-  { :download => [ :get, 'path/to/file' ] }.each do |sandbox_method, args|
+  {
+          :download => [ :get, 'path/to/file' ],
+          :copy => [ :post, 'source/file', 'dest/file' ]
+  }.each do |sandbox_method, args|
     describe sandbox_method do
+      before :each do
+        @response.stub!(:body).and_return('{"a":"b"}')
+      end
+
       it "should use the dropbox root if not sandboxed" do
         @token_mock.should_receive(args.first).once do |url, *rest|
-          url.should include('/dropbox')
-          url.should_not include('/sandbox')
+          url.should_not include('sandbox')
           @response
         end
         @session.send(sandbox_method, *(args[1..-1]))
@@ -98,8 +164,7 @@ describe Dropbox::API do
 
       it "should use the sandbox root if sandboxed" do
         @token_mock.should_receive(args.first).once do |url, *rest|
-          url.should_not include('/dropbox')
-          url.should include('/sandbox')
+          url.should include('sandbox')
           @response
         end
         @session.sandbox = true

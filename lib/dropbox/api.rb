@@ -66,6 +66,39 @@ module Dropbox
       #TODO streaming, range queries
     end
 
+    # Copies the +source+ file to the path at +target+. If +target+ ends with a
+    # slash, the new file will share the same name as the old file. Returns a
+    # Struct with metadata for the new file. (See the info method.)
+    #
+    # Both paths are assumed to be relative to the Dropbox root, or if sandbox
+    # is enabled, the sandbox root.
+    #
+    # Raises FileNotFoundError if +source+ does not exist. Raises
+    # FileExistsError if +target+ already exists.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    #TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
+
+
+    def copy(source, target, options={})
+      source.sub! /^\//, ''
+      target.sub! /^\//, ''
+      target << File.basename(source) if target.ends_with?('/')
+      begin
+        parse_metadata(post('fileops', 'copy', :from_path => source, :to_path => target, :root => root(options))).to_struct_recursively
+      rescue UnsuccessfulResponseError => error
+        raise FileNotFoundError.new(source) if error.response.kind_of?(Net::HTTPNotFound)
+        raise FileExistsError.new(target) if error.response.kind_of?(Net::HTTPForbidden)
+        raise error
+      end
+    end
+    alias :cp :copy
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?
@@ -79,6 +112,11 @@ module Dropbox
     end
 
     private
+
+    def parse_metadata(hsh)
+      hsh[:modified] = Time.parse(hsh[:modified]) if hsh[:modified]
+      hsh
+    end
 
     def root(options={})
       if sandbox? then
@@ -157,4 +195,29 @@ module Dropbox
       "HTTP status #{@response.class.to_s} received: #{request}"
     end
   end
+
+  # Superclass of errors relating to Dropbox files.
+
+  class FileError < StandardError
+    # The path of the offending file.
+    attr_reader :path
+
+    def initialize(path) # :nodoc:
+      @path = path
+    end
+
+    def message # :nodoc:
+      "#{self.class.to_s}: #{@path}"
+    end
+    alias :to_s :message
+    alias :to_str :message
+  end
+
+  # Raised when a Dropbox file doesn't exist.
+
+  class FileNotFoundError < FileError; end
+
+  # Raised when a Dropbox file is in the way.
+
+  class FileExistsError < FileError; end
 end
