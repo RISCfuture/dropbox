@@ -150,6 +150,61 @@ module Dropbox
     end
     alias :rm :delete
 
+    # Moves the +source+ file to the path at +target+. If +target+ ends with a
+    # slash, the file name will remain unchanged. If +source+ and +target+ share
+    # the same path but have differing file names, the file will be renamed (see
+    # also the rename method). Returns a Struct with metadata for the new file.
+    # (See the info method.)
+    #
+    # Both paths are assumed to be relative to the Dropbox root, or if sandbox
+    # is enabled, the sandbox root.
+    #
+    # Raises FileNotFoundError if +source+ does not exist. Raises
+    # FileExistsError if +target+ already exists.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    #TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
+
+
+    def move(source, target, options={})
+      source.sub! /^\//, ''
+      target.sub! /^\//, ''
+      target << File.basename(source) if target.ends_with?('/')
+      begin
+        parse_metadata(post('fileops', 'move', :from_path => source, :to_path => target, :root => root(options))).to_struct_recursively
+      rescue UnsuccessfulResponseError => error
+        raise FileNotFoundError.new(source) if error.response.kind_of?(Net::HTTPNotFound)
+        raise FileExistsError.new(target) if error.response.kind_of?(Net::HTTPForbidden)
+        raise error
+      end
+    end
+    alias :mv :move
+
+    # Renames a file. Takes the same options and raises the same exceptions as
+    # the move method.
+    #
+    # Calling
+    #
+    #  session.rename 'path/to/file', 'new_name'
+    #
+    # is equivalent to calling
+    #
+    #  session.move 'path/to/file', 'path/to/new_name'
+
+    def rename(path, new_name, options={})
+      raise ArgumentError, "Names cannot have slashes in them" if new_name.include?('/')
+      path.sub! /\/$/, ''
+      destination = path.split('/')
+      destination[destination.size - 1] = new_name
+      destination = destination.join('/')
+      move path, destination, options
+    end
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?

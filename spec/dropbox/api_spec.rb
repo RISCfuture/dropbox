@@ -130,6 +130,79 @@ describe Dropbox::API do
     end
   end
 
+  describe "#move" do
+    before :each do
+      @response.stub!(:body).and_return('{"a":"b"}')
+    end
+
+    it "should call the fileops/move API method" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/move', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
+      @session.move 'source/file', 'dest/file'
+    end
+
+    it "should return the metadata as a struct" do
+      @response.stub!(:body).and_return( { :foo => :bar, :baz => { :hey => :you } }.to_json)
+      @token_mock.stub!(:post).and_return(@response)
+
+      result = @session.move('a', 'b')
+      result.foo.should eql('bar')
+      result.baz.hey.should eql('you')
+    end
+
+    it "should strip a leading slash from source" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/move', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
+      @session.move '/source/file', 'dest/file'
+    end
+
+    it "should strip a leading slash from target" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/move', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
+      @session.move 'source/file', '/dest/file'
+    end
+
+    it "should set the target file name to the source file name if the target is a directory path" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/move', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
+      @session.move 'source/file', 'dest/'
+    end
+
+    it "should re-raise 404's as FileNotFoundErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.move('a', 'b') }.should raise_error(Dropbox::FileNotFoundError)
+    end
+
+    it "should re-raise 403's as FileExistsErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.move('a', 'b') }.should raise_error(Dropbox::FileExistsError)
+    end
+
+    it "should raise other errors unmodified" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.move('a', 'b') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
+  describe "#rename" do
+    it "should raise an error if the new name has a slash in it" do
+      lambda { @session.rename 'file', 'new/name' }.should raise_error(ArgumentError)
+    end
+
+    it "should call move with the appropriate path and return the result of the call" do
+      @session.should_receive(:move).once.with('old/path/to/file', 'old/path/to/new_file', :sandbox => true).and_return(@response)
+      @session.rename('old/path/to/file', 'new_file', :sandbox => true).should eql(@response)
+    end
+  end
+
   describe "#create_folder" do
     before :each do
       @response.stub!(:body).and_return('{"a":"b"}')
@@ -251,6 +324,7 @@ describe Dropbox::API do
   {
           :download => [ :get, 'path/to/file' ],
           :copy => [ :post, 'source/file', 'dest/file' ],
+          :move => [ :post, 'source/file', 'dest/file' ],
           :create_folder => [ :post, 'new/folder' ],
           :delete => [ :post, 'some/file' ]
   }.each do |sandbox_method, args|
