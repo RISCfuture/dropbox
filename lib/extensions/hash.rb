@@ -13,6 +13,7 @@ class Hash # :nodoc:
   def symbolize_keys_recursively # :nodoc:
     hsh = symbolize_keys
     hsh.each { |k, v| hsh[k] = v.symbolize_keys_recursively if v.kind_of?(Hash) }
+    hsh.each { |k, v| hsh[k] = v.map { |i| i.kind_of?(Hash) ? i.symbolize_keys_recursively : i } if v.kind_of?(Array) }
     return hsh
   end
 
@@ -23,6 +24,7 @@ class Hash # :nodoc:
   def to_struct_recursively # :nodoc:
     hsh = dup
     hsh.each { |k, v| hsh[k] = v.to_struct_recursively if v.kind_of?(Hash) }
+    hsh.each { |k, v| hsh[k] = v.map { |i| i.kind_of?(Hash) ? i.to_struct_recursively : i } if v.kind_of?(Array) }
     return hsh.to_struct
   end
 end

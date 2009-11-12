@@ -317,6 +317,79 @@ describe Dropbox::API do
     end
   end
 
+  describe "#metadata" do
+    before :each do
+      @response.stub!(:body).and_return('{"a":"b"}')
+    end
+
+    it "should call the API method metadata" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'metadata', { :list => 'true' }, @response, 'some/file', 'dropbox'
+      @session.metadata 'some/file'
+    end
+
+    it "should strip a leading slash" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'metadata', { :list => 'true' }, @response, 'some/file', 'dropbox'
+      @session.metadata '/some/file'
+    end
+
+    it "should set file_limit if :limit is set" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'metadata', { :list => 'true', :file_limit => '123' }, @response, 'some/file', 'dropbox'
+      @session.metadata 'some/file', :limit => 123
+    end
+
+    it "should set list=false if :suppress_list is set" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'metadata', { :list => 'false' }, @response, 'some/file', 'dropbox'
+      @session.metadata 'some/file', :suppress_list => true
+    end
+
+    it "should rescue 406's and re-raise them as TooManyEntriesErrors" do
+      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(true)
+      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:get).and_return(@response)
+      
+      lambda { @session.metadata('a') }.should raise_error(Dropbox::TooManyEntriesError)
+    end
+
+    it "should rescue 404's and re-raise them as FileNotFoundErrors" do
+      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(false)
+      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(true)
+      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:get).and_return(@response)
+
+      lambda { @session.metadata('a') }.should raise_error(Dropbox::FileNotFoundError)
+    end
+
+    it "should re-raise other errors unmodified" do
+      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(false)
+      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:get).and_return(@response)
+
+      lambda { @session.metadata('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
+  describe "#list" do
+    before :each do
+      @response = mock('metadata')
+    end
+
+    it "should call the metadata method and return the contents attribute" do
+      @response.should_receive(:contents).once.and_return([ 'contents' ])
+      @session.should_receive(:metadata).once.with('my/file', an_instance_of(Hash)).and_return(@response)
+
+      @session.list('my/file').should == [ 'contents' ]
+    end
+
+    it "should not allow suppress_list to be set to true" do
+      @response.stub!(:contents)
+      @session.should_receive(:metadata).once.with('my/file', hash_including(:hash => true, :suppress_list => false)).and_return(@response)
+
+      @session.list('my/file', :suppress_list => true, :hash => true)
+    end
+  end
+
   describe "#sandbox?" do
     it "should return true if sandboxed" do
       @session.sandbox = true
@@ -357,7 +430,8 @@ describe Dropbox::API do
           :move => [ :post, 'source/file', 'dest/file' ],
           :create_folder => [ :post, 'new/folder' ],
           :delete => [ :post, 'some/file' ],
-          :link => [ :get, 'some/file' ]
+          :link => [ :get, 'some/file' ],
+          :metadata => [ :get, 'some/file' ]
   }.each do |sandbox_method, args|
     describe sandbox_method do
       before :each do

@@ -229,6 +229,73 @@ module Dropbox
     end
     memoize :link
 
+    # Returns a Struct containing metadata on a given file or folder. The path
+    # is assumed to be relative to the Dropbox root, or if sandbox is enabled,
+    # the sandbox root.
+    #
+    # If you pass a directory for +path+, the metadata will also contain a
+    # listing of the directory contents (unless the +suppress_list+ option is
+    # true).
+    #
+    # For information on the schema of the return struct, see the Dropbox API
+    # at http://developers.dropbox.com/python/base.html#metadata
+    #
+    # Options:
+    #
+    # +suppress_list+:: Set this to true to remove the directory list from
+    #                   the result (only applicable if +path+ is a directory).
+    # +limit+:: Set this value to limit the number of entries returned when
+    #           listing a directory. If the result has more than this number of
+    #           entries, a TooManyEntriesError will be raised.
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    #TODO hash option seems to return HTTPBadRequest for now
+
+    def metadata(path, options={})
+      path.sub! /^\//, ''
+      args = [
+              'metadata',
+              root(options)
+              ]
+      args += path.split('/')
+      args << Hash.new
+      args.last[:file_limit] = options[:limit] if options[:limit]
+      #args.last[:hash] = options[:hash] if options[:hash]
+      args.last[:list] = !(options[:suppress_list].to_bool)
+      
+      begin
+        parse_metadata(get(*args)).to_struct_recursively
+      rescue UnsuccessfulResponseError => error
+        raise TooManyEntriesError.new(path) if error.response.kind_of?(Net::HTTPNotAcceptable)
+        raise FileNotFoundError.new(path) if error.response.kind_of?(Net::HTTPNotFound)
+        #return :not_modified if error.kind_of?(Net::HTTPNotModified)
+        raise error
+      end
+    end
+    memoize :metadata
+    alias :info :metadata
+
+    # Returns an array of Structs with information on each file within the given
+    # directory. Calling
+    #
+    #  session.list 'my/folder'
+    #
+    # is equivalent to calling
+    #
+    #  session.metadata('my/folder').contents
+    #
+    # Returns nil if the path is not a directory. Raises the same exceptions as
+    # the metadata method. Takes the same options as the metadata method, except
+    # the +suppress_list+ option is implied to be false.
+
+
+    def list(path, options={})
+      metadata(path, options.merge(:suppress_list => false)).contents
+    end
+    alias :ls :list
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?
@@ -245,6 +312,8 @@ module Dropbox
 
     def parse_metadata(hsh)
       hsh[:modified] = Time.parse(hsh[:modified]) if hsh[:modified]
+      hsh.each { |_,v| parse_metadata(v) if v.kind_of?(Hash) }
+      hsh.each { |_,v| v.each { |h| parse_metadata(h) if h.kind_of?(Hash) } if v.kind_of?(Array) }
       hsh
     end
 
@@ -350,4 +419,9 @@ module Dropbox
   # Raised when a Dropbox file is in the way.
 
   class FileExistsError < FileError; end
+
+  # Raised when the number of files within a directory exceeds a specified
+  # limit.
+
+  class TooManyEntriesError < FileError; end
 end
