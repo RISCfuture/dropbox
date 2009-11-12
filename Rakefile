@@ -5,15 +5,21 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "dropbox"
-    gem.summary = %Q{TODO: one-line summary of your gem}
-    gem.description = %Q{TODO: longer description of your gem}
-    gem.email = "tim@scribd.com"
+    gem.version = File.read("VERSION").chomp.strip
+    gem.summary = %Q{Ruby Dropbox interface}
+    gem.description = %Q{An easy-to-use interface to the RESTful Dropbox API.}
+    gem.email = "dropbox@timothymorgan.info"
     gem.homepage = "http://github.com/RISCfuture/dropbox"
     gem.authors = ["Tim Morgan"]
+
+    gem.files += FileList["lib/dropbox/*.rb"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+    gem.add_runtime_dependency "oauth", ">= 0.3.6"
+
+    gem.rubyforge_project = "dropbox"
   end
   Jeweler::GemcutterTasks.new
+  Jeweler::RubyforgeTasks.new
 rescue LoadError
   puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
 end
@@ -36,10 +42,10 @@ task :default => :spec
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|
-  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+  version = File.exist?('VERSION') ? File.read('VERSION').chomp.strip : ""
 
   rdoc.rdoc_dir = 'rdoc'
-  rdoc.title = "dropbox #{version}"
+  rdoc.title = "Dropbox API Client #{version}"
   rdoc.rdoc_files.include('README*')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end

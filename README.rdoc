@@ -1,6 +1,10 @@
 = dropbox
 
-Description goes here.
+An easy-to-use interface to the RESTful Dropbox API.
+
+== Tutorial by Example
+
+(Coming up real soon.)
 
 == Note on Patches/Pull Requests
  

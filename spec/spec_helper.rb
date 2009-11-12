@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-require 'dropbox'
+require 'rubygems'
+require 'dropbox.rb'
 require 'spec'
 require 'spec/autorun'
 
