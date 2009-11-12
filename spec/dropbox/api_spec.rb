@@ -287,6 +287,36 @@ describe Dropbox::API do
     end
   end
 
+  describe "#link" do
+    before :each do
+      @response.stub!(:code).and_return(304)
+      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @response.stub!(:kind_of?).with(Net::HTTPFound).and_return(true)
+      @response.stub!(:[]).and_return("new location")
+    end
+
+    it "should call the API method links" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'links', {}, @response, 'some/file', 'dropbox'
+      @session.link 'some/file'
+    end
+
+    it "should strip a leading slash" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'links', {}, @response, 'some/file', 'dropbox'
+      @session.link '/some/file'
+    end
+
+    it "should rescue 304's and return the Location header" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'links', {}, @response, 'some/file', 'dropbox'
+      lambda { @session.link('some/file').should eql("new location") }.should_not raise_error
+    end
+
+    it "should re-raise other errors unmodified" do
+      @response.stub!(:kind_of?).with(Net::HTTPFound).and_return(false)
+      @token_mock.stub!(:get).and_return(@response)
+      lambda { @session.link('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
   describe "#sandbox?" do
     it "should return true if sandboxed" do
       @session.sandbox = true
@@ -326,7 +356,8 @@ describe Dropbox::API do
           :copy => [ :post, 'source/file', 'dest/file' ],
           :move => [ :post, 'source/file', 'dest/file' ],
           :create_folder => [ :post, 'new/folder' ],
-          :delete => [ :post, 'some/file' ]
+          :delete => [ :post, 'some/file' ],
+          :link => [ :get, 'some/file' ]
   }.each do |sandbox_method, args|
     describe sandbox_method do
       before :each do

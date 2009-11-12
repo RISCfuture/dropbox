@@ -205,6 +205,30 @@ module Dropbox
       move path, destination, options
     end
 
+    # Returns a cookie-protected URL that the authorized user can use to view
+    # the file at the given path. This URL requires an authorized user.
+    #
+    # The path is assumed to be relative to the Dropbox root, or if sandbox is
+    # enabled, the sandbox root.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+
+    def link(path, options={})
+      path.sub! /^\//, ''
+      begin
+        api_response(:get, 'links', root(options), *(path.split('/')))
+      rescue UnsuccessfulResponseError => error
+        return error.response['Location'] if error.response.kind_of?(Net::HTTPFound)
+        #TODO shouldn't be using rescue blocks for normal program flow
+        raise error
+      end
+    end
+    memoize :link
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?
