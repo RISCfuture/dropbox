@@ -111,6 +111,52 @@ describe Dropbox::API do
     end
   end
 
+  describe "#create_folder" do
+    before :each do
+      @response.stub!(:body).and_return('{"a":"b"}')
+    end
+    
+    it "should call the fileops/create_folder API method" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      @session.create_folder 'new/folder'
+    end
+
+    it "should return the metadata as a struct" do
+      @response.stub!(:body).and_return( { :foo => :bar, :baz => { :hey => :you } }.to_json)
+      @token_mock.stub!(:post).and_return(@response)
+
+      result = @session.create_folder('a')
+      result.foo.should eql('bar')
+      result.baz.hey.should eql('you')
+    end
+    
+    it "should strip a leading slash from the path" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      @session.create_folder '/new/folder'
+    end
+    
+    it "should strip a trailing slash from the path" do
+      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      @session.create_folder 'new/folder/'
+    end
+
+    it "should re-raise 403's as FileExistsErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.create_folder('a') }.should raise_error(Dropbox::FileExistsError)
+    end
+
+    it "should raise other errors unmodified" do
+      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.create_folder('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
   describe "#sandbox?" do
     it "should return true if sandboxed" do
       @session.sandbox = true
@@ -147,7 +193,8 @@ describe Dropbox::API do
 
   {
           :download => [ :get, 'path/to/file' ],
-          :copy => [ :post, 'source/file', 'dest/file' ]
+          :copy => [ :post, 'source/file', 'dest/file' ],
+          :create_folder => [ :post, 'new/folder' ]
   }.each do |sandbox_method, args|
     describe sandbox_method do
       before :each do

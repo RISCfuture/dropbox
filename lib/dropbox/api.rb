@@ -99,6 +99,31 @@ module Dropbox
     end
     alias :cp :copy
 
+    # Creates a folder at the given path. The path is assumed to be relative to
+    # the Dropbox root, or if sandbox is enabled, the sandbox root.
+    #
+    # Raises FileExistsError if there is already a file or folder at +path+.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    #TODO The API documentation says this method returns 403 if the path already exists, but it actually appends " (1)" to the end of the name and returns 200.
+
+    def create_folder(path, options={})
+      path.sub! /^\//, ''
+      path.sub! /\/$/, ''
+      begin
+        parse_metadata(post('fileops', 'create_folder', :path => path, :root => root(options))).to_struct_recursively
+      rescue UnsuccessfulResponseError => error
+        raise FileExistsError.new(path) if error.response.kind_of?(Net::HTTPForbidden)
+        raise error
+      end
+    end
+    alias :mkdir :create_folder
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?
