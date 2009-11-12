@@ -7,6 +7,8 @@ module Dropbox
   # This class is a portal to the Dropbox API and a façade over the Ruby OAuth
   # gem allowing developers to authenticate their user's Dropbox accounts.
   #
+  # == Authenticating a user
+  #
   # You start by creating a new instance and providing your OAuth consumer key
   # and secret. You then call the authorize_url method on your new instance to
   # receive the authorization URL.
@@ -35,8 +37,14 @@ module Dropbox
   #      session[:dropbox_session] = dropbox_session.serialize # re-serialize the authenticated session
   #    end
   #  end
+  #
+  # == Working with the API
+  #
+  # This class includes the methods of the Dropbox::API module. See that module
+  # to learn how to continue using the API.
 
   class Session
+    include API
 
     # Begins the authorization process. Provide the OAuth key and secret of your
     # API account, assigned by Dropbox. This is the first step in the
@@ -116,6 +124,10 @@ module Dropbox
       end
       
       return session
+    end
+
+    def inspect # :nodoc:
+      "#<#{self.class.to_s} #{@consumer.key}>"
     end
 
     private
