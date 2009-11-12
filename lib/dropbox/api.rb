@@ -17,6 +17,22 @@ module Dropbox
   #
   # You can opt-in to memoization of API method results. See the
   # Dropbox::Memoization class documentation to learn more.
+  #
+  # == Sandboxing
+  #
+  # The Dropbox API includes a feature called "Sandboxing" whereby all
+  # operations on files are limited to a sandbox folder within the user's
+  # Dropbox. If your credentials allow you sandbox access only, you should set
+  # the +sandbox+ attribute:
+  #
+  #  session.sandbox = true
+  #
+  # After setting this attribute, file manipulation will be performed within the
+  # sandbox environment.
+  #
+  # Most file-related operations take options that allow you to temporarily
+  # revert into our out of sandbox mode, regardless of the value of the
+  # +sandbox+ attribute.
 
   module API
     include Dropbox::Memoization
@@ -29,8 +45,48 @@ module Dropbox
       get('account', 'info').to_struct_recursively
     end
     memoize :account
-    
+
+    # Downloads the file at the given path relative to the Dropbox root. If
+    # the +sandbox+ attribute is set to true, takes the path to be relative to
+    # the sandbox root.
+    #
+    # Returns the contents of the downloaded file as a String. Support for
+    # streaming downloads and range queries is available server-side, but not
+    # available in this API client due to limitations of the OAuth gem.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+
+    def download(path, options={})
+      path.sub! /^\//, ''
+      api_body :get, 'files', root(options), *(path.split('/'))
+      #TODO streaming, range queries
+    end
+
+    # Returns true if this session is in sandboxed mode.
+
+    def sandbox?
+      @sandbox.to_bool
+    end
+
+    # Turns on or off sandboxed mode.
+
+    def sandbox=(val)
+      @sandbox = val.to_bool
+    end
+
     private
+
+    def root(options={})
+      if sandbox? then
+        return options[:dropbox] ? 'dropbox' : 'sandbox'
+      else
+        return options[:sandbox] ? 'sandbox' : 'dropbox'
+      end
+    end
 
     def get(*params)
       api_json :get, *params
