@@ -124,6 +124,32 @@ module Dropbox
     end
     alias :mkdir :create_folder
 
+    # Deletes a file or folder at the given path. The path is assumed to be
+    # relative to the Dropbox root, or if sandbox is enabled, the sandbox root.
+    #
+    # Raises FileNotFoundError if the file or folder does not exist at +path+.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    #TODO The API documentation says this method returns 404 if the path does not exist, but it actually fails silently.
+    
+    def delete(path, options={})
+      path.sub! /^\//, ''
+      path.sub! /\/$/, ''
+      begin
+        api_response(:post, 'fileops', 'delete', :path => path, :root => root(options))
+      rescue UnsuccessfulResponseError => error
+        raise FileNotFoundError.new(path) if error.response.kind_of?(Net::HTTPNotFound)
+        raise error
+      end
+      return true
+    end
+    alias :rm :delete
+
     # Returns true if this session is in sandboxed mode.
 
     def sandbox?

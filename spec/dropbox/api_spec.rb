@@ -1,5 +1,24 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
+def url_args(url)
+  return {} unless url.include?('?')
+  _, back = url.split('?')
+  return {} unless back
+  back.split('&').map { |comp| comp.split('=') }.to_hash
+end
+
+def should_receive_api_method_with_arguments(object, method, api_method, arguments, response, path=nil, root=nil)
+  object.should_receive(method).once do |url|
+    front = url.split('?').first
+    front.should eql("#{Dropbox::ALTERNATE_HOSTS[api_method] || Dropbox::HOST}/#{Dropbox::VERSION}/#{api_method}#{'/' + root if root}#{'/' + path if path}")
+
+    query_params = url_args(url)
+    query_params.each { |key, val| arguments[key.to_sym].should eql(val) }
+    arguments.each { |key, _| query_params.should include(key.to_s) }
+    response
+  end
+end
+
 describe Dropbox::API do
   before :each do
     consumer_mock = mock("OAuth::Consumer")
@@ -21,7 +40,7 @@ describe Dropbox::API do
   describe "#account" do
     it "should call the /account/info API method" do
       @response.stub!(:body).and_return('{"a":"b"}')
-      @token_mock.should_receive(:get).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/account/info").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :get, 'account/info', {}, @response
       @session.account
     end
 
@@ -36,12 +55,12 @@ describe Dropbox::API do
 
   describe "#download" do
     it "should call the /files/dropbox API method" do
-      @token_mock.should_receive(:get).once.with("#{Dropbox::ALTERNATE_HOSTS['files']}/#{Dropbox::VERSION}/files/dropbox/path/to/file").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :get, 'files', {}, @response, 'path/to/file', 'dropbox'
       @session.download "path/to/file"
     end
 
     it "should strip a leading slash" do
-      @token_mock.should_receive(:get).once.with("#{Dropbox::ALTERNATE_HOSTS['files']}/#{Dropbox::VERSION}/files/dropbox/path/to/file").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :get, 'files', {}, @response, 'path/to/file', 'dropbox'
       @session.download "/path/to/file"
     end
 
@@ -56,8 +75,8 @@ describe Dropbox::API do
       @response.stub!(:body).and_return('{"a":"b"}')
     end
     
-    it "should call the /fileops/copy API method" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+    it "should call the fileops/copy API method" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/copy', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
       @session.copy 'source/file', 'dest/file'
     end
 
@@ -71,17 +90,17 @@ describe Dropbox::API do
     end
 
     it "should strip a leading slash from source" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/copy', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
       @session.copy '/source/file', 'dest/file'
     end
     
     it "should strip a leading slash from target" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/copy', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
       @session.copy 'source/file', '/dest/file'
     end
 
     it "should set the target file name to the source file name if the target is a directory path" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/copy?root=dropbox&from_path=source%2Ffile&to_path=dest%2Ffile").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/copy', { :from_path => 'source%2Ffile', :to_path => 'dest%2Ffile', :root => 'dropbox' }, @response
       @session.copy 'source/file', 'dest/'
     end
 
@@ -117,7 +136,7 @@ describe Dropbox::API do
     end
     
     it "should call the fileops/create_folder API method" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/create_folder', { :path => 'new%2Ffolder', :root => 'dropbox' }, @response
       @session.create_folder 'new/folder'
     end
 
@@ -131,12 +150,12 @@ describe Dropbox::API do
     end
     
     it "should strip a leading slash from the path" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/create_folder', { :path => 'new%2Ffolder', :root => 'dropbox' }, @response
       @session.create_folder '/new/folder'
     end
     
     it "should strip a trailing slash from the path" do
-      @token_mock.should_receive(:post).once.with("#{Dropbox::HOST}/#{Dropbox::VERSION}/fileops/create_folder?path=new%2Ffolder&root=dropbox").and_return(@response)
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/create_folder', { :path => 'new%2Ffolder', :root => 'dropbox' }, @response
       @session.create_folder 'new/folder/'
     end
 
@@ -154,6 +173,44 @@ describe Dropbox::API do
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.create_folder('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
+
+  describe "#delete" do
+    it "should call the API method fileops/delete" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/delete', { :path => 'some%2Ffile', :root => 'dropbox' }, @response
+      @session.delete 'some/file'
+    end
+
+    it "should return true" do
+      @token_mock.stub!(:post).and_return(@response)
+      @session.delete('some/file').should be_true
+    end
+
+    it "should strip a leading slash from the path" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/delete', { :path => 'some%2Ffile', :root => 'dropbox' }, @response
+      @session.delete '/some/file'
+    end
+
+    it "should strip a trailing slash from the path" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'fileops/delete', { :path => 'some%2Ffile', :root => 'dropbox' }, @response
+      @session.delete 'some/file/'
+    end
+
+    it "should re-raise 404's as FileNotFoundErrors" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.delete('a') }.should raise_error(Dropbox::FileNotFoundError)
+    end
+    
+    it "should raise other errors unmodified" do
+      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
+      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      @token_mock.stub!(:post).and_return(@response)
+
+      lambda { @session.delete('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
   end
 
@@ -194,7 +251,8 @@ describe Dropbox::API do
   {
           :download => [ :get, 'path/to/file' ],
           :copy => [ :post, 'source/file', 'dest/file' ],
-          :create_folder => [ :post, 'new/folder' ]
+          :create_folder => [ :post, 'new/folder' ],
+          :delete => [ :post, 'some/file' ]
   }.each do |sandbox_method, args|
     describe sandbox_method do
       before :each do
