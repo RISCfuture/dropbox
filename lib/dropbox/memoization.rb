@@ -1,5 +1,7 @@
 # Defines the Dropbox::Memoization module.
 
+nil # doc fix
+
 module Dropbox
 
   # Adds methods to the Dropbox::Session class to support the temporary local
@@ -16,9 +18,23 @@ module Dropbox
   # memcache instance), set the +cache_proc+ and +cache_clear_proc+ attributes.
   #
   # Enabling memoization makes removes an instance's thread-safety.
+  #
+  # Example:
+  #
+  #  session.metadata('file1') # network
+  #
+  #  session.enable_memoization
+  #  session.metadata('file1') # network
+  #  session.metadata('file1') # cache
+  #
+  #  session.metadata('file2') # network
+  #  session.metadata('file2') # cache
+  #
+  #  session.disable_memoization
+  #  session.metadata('file2') # network
 
   module Memoization
-    def self.included(base)
+    def self.included(base) # :nodoc:
       base.extend ClassMethods
     end
 
@@ -46,7 +62,7 @@ module Dropbox
       @_memo_cache_clear_proc = prc
     end
 
-    # Begins memoizing the results of API calls. Memozation is off by default
+    # Begins memoizing the results of API calls. Memoization is off by default
     # for new instances.
 
     def enable_memoization

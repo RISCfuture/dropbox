@@ -11,8 +11,8 @@ module Dropbox
   # Dropbox::Session instance before you can call any of these methods. (See the
   # Dropbox::Session class documentation for instructions.)
   #
-  # API methods generally return Struct objects containing their results, unless
-  # otherwise noted. See the Dropbox API documentation at
+  # API methods generally return +Struct+ objects containing their results,
+  # unless otherwise noted. See the Dropbox API documentation at
   # http://developers.dropbox.com for specific information on the schema of each
   # result.
   #
@@ -48,7 +48,7 @@ module Dropbox
     alias :directory :entry
     alias :dir :entry
 
-    # Returns a Struct with information about the user's account. See
+    # Returns a +Struct+ with information about the user's account. See
     # http://developers.dropbox.com/python/base.html#account-info for more
     # information on the data returned.
 
@@ -61,7 +61,7 @@ module Dropbox
     # the +sandbox+ attribute is set to true, takes the path to be relative to
     # the sandbox root.
     #
-    # Returns the contents of the downloaded file as a String. Support for
+    # Returns the contents of the downloaded file as a +String+. Support for
     # streaming downloads and range queries is available server-side, but not
     # available in this API client due to limitations of the OAuth gem.
     #
@@ -145,7 +145,7 @@ module Dropbox
 
     # Copies the +source+ file to the path at +target+. If +target+ ends with a
     # slash, the new file will share the same name as the old file. Returns a
-    # Struct with metadata for the new file. (See the info method.)
+    # +Struct+ with metadata for the new file. (See the metadata method.)
     #
     # Both paths are assumed to be relative to the Dropbox root, or if sandbox
     # is enabled, the sandbox root.
@@ -159,8 +159,7 @@ module Dropbox
     #             mode.
     # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
     #
-    #TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
-
+    # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
     def copy(source, target, options={})
       source.sub! /^\//, ''
@@ -177,7 +176,8 @@ module Dropbox
     alias :cp :copy
 
     # Creates a folder at the given path. The path is assumed to be relative to
-    # the Dropbox root, or if sandbox is enabled, the sandbox root.
+    # the Dropbox root, or if sandbox is enabled, the sandbox root. Returns a
+    # +Struct+ with metadata about the new folder. (See the metadata method.)
     #
     # Raises FileExistsError if there is already a file or folder at +path+.
     #
@@ -187,7 +187,7 @@ module Dropbox
     #             mode.
     # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
     #
-    #TODO The API documentation says this method returns 403 if the path already exists, but it actually appends " (1)" to the end of the name and returns 200.
+    # TODO The API documentation says this method returns 403 if the path already exists, but it actually appends " (1)" to the end of the name and returns 200.
 
     def create_folder(path, options={})
       path.sub! /^\//, ''
@@ -212,7 +212,7 @@ module Dropbox
     #             mode.
     # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
     #
-    #TODO The API documentation says this method returns 404 if the path does not exist, but it actually fails silently.
+    # TODO The API documentation says this method returns 404 if the path does not exist, but it actually returns 5xx.
     
     def delete(path, options={})
       path.sub! /^\//, ''
@@ -230,8 +230,8 @@ module Dropbox
     # Moves the +source+ file to the path at +target+. If +target+ ends with a
     # slash, the file name will remain unchanged. If +source+ and +target+ share
     # the same path but have differing file names, the file will be renamed (see
-    # also the rename method). Returns a Struct with metadata for the new file.
-    # (See the info method.)
+    # also the rename method). Returns a +Struct+ with metadata for the new
+    # file. (See the metadata method.)
     #
     # Both paths are assumed to be relative to the Dropbox root, or if sandbox
     # is enabled, the sandbox root.
@@ -245,8 +245,7 @@ module Dropbox
     #             mode.
     # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
     #
-    #TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
-
+    # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
     def move(source, target, options={})
       source.sub! /^\//, ''
@@ -306,7 +305,7 @@ module Dropbox
     end
     memoize :link
 
-    # Returns a Struct containing metadata on a given file or folder. The path
+    # Returns a +Struct+ containing metadata on a given file or folder. The path
     # is assumed to be relative to the Dropbox root, or if sandbox is enabled,
     # the sandbox root.
     #
@@ -328,7 +327,7 @@ module Dropbox
     #             mode.
     # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
     #
-    #TODO hash option seems to return HTTPBadRequest for now
+    # TODO hash option seems to return HTTPBadRequest for now
 
     def metadata(path, options={})
       path.sub! /^\//, ''
@@ -354,8 +353,8 @@ module Dropbox
     memoize :metadata
     alias :info :metadata
 
-    # Returns an array of Structs with information on each file within the given
-    # directory. Calling
+    # Returns an array of <tt>Struct</tt>s with information on each file within
+    # the given directory. Calling
     #
     #  session.list 'my/folder'
     #

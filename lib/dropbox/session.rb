@@ -23,18 +23,20 @@ module Dropbox
   #
   # The authorize method must be called on the same instance of Dropbox::Session
   # that gave you the URL. If this is unfeasible (for instance, you are doing
-  # this in a stateless Rails application), you can serialize this object in
-  # your Rails session:
+  # this in a stateless Rails application), you can serialize the Session for
+  # storage (e.g., in your Rails session):
   #
   #  def authorize
-  #    if request.method.get? then
-  #      dropbox_session = Dropbox::Session.new(my_key, my_secret)
-  #      session[:dropbox_session] = dropbox_session.serialize
-  #      redirect_to dropbox_session.authorize_url(:oauth_callback => url_for(:action => 'authorize))
-  #    elsif request.method.post? then
+  #    if params[:oauth_token] then
   #      dropbox_session = Dropbox::Session.deserialize(session[:dropbox_session])
   #      dropbox_session.authorize(params)
   #      session[:dropbox_session] = dropbox_session.serialize # re-serialize the authenticated session
+  #
+  #      redirect_to :action => 'upload'
+  #    else
+  #      dropbox_session = Dropbox::Session.new('your_consumer_key', 'your_consumer_secret')
+  #      session[:dropbox_session] = dropbox_session.serialize
+  #      redirect_to dropbox_session.authorize_url(:oauth_callback => root_url)
   #    end
   #  end
   #
@@ -75,8 +77,8 @@ module Dropbox
     # third step in the authorization process, after sending the user to the
     # authorize_url.
     #
-    # You should pass to this method a hash containing the keys and values of
-    # the OAuth parameters returned by Dropbox. An example in Rails:
+    # You can pass to this method a hash containing the keys and values of the
+    # OAuth parameters returned by Dropbox. An example in Rails:
     #
     #  session.authorize :oauth_verifier => params[:oauth_verifier]
     #
@@ -96,10 +98,6 @@ module Dropbox
 
     # Serializes this object into a string that can then be recreated with the
     # Dropbox::Session.deserialize method.
-    #
-    # <b>This method is only intended for serializing unauthorized Session
-    # instances.</b> Serializing Session instances after the authorize method
-    # has been called will result in undefined operation after deserialization!
 
     def serialize
       if authorized? then

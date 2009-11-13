@@ -1,10 +1,12 @@
-# Defines the Dropbox::File class.
+# Defines the Dropbox::Entry class.
+
+nil # doc fix
 
 module Dropbox
 
   # A façade over a Dropbox::Session that allows the programmer to interact with
   # Dropbox files in an object-oriented manner. The Dropbox::Entry instance is
-  # created by calling the Dropbox::Session#file method:
+  # created by calling the Dropbox::API#entry method:
   #
   #  file = session.file('remote/file.pdf')
   #  dir = session.directory('remote/dir') # these calls are actually identical
@@ -29,19 +31,21 @@ module Dropbox
       @path = path
     end
 
-    # Delegates to Dropbox::Session#metadata.
+    # Delegates to Dropbox::API#metadata.
 
     def metadata(options={})
       @session.metadata path, options
     end
     alias :info :metadata
+    
+    # Delegates to Dropbox::API#list
 
     def list(options={})
       @session.list path, options
     end
     alias :ls :list
 
-    # Delegates to Dropbox::Session#move.
+    # Delegates to Dropbox::API#move.
 
     def move(dest, options={})
       result = @session.move(path, dest, options)
@@ -50,7 +54,7 @@ module Dropbox
     end
     alias :mv :move
 
-    # Delegates to Dropbox::Session#rename.
+    # Delegates to Dropbox::API#rename.
 
     def rename(name, options={})
       result = @session.rename(path, name, options)
@@ -58,28 +62,28 @@ module Dropbox
       return result
     end
 
-    # Delegates to Dropbox::Session#copy.
+    # Delegates to Dropbox::API#copy.
 
     def copy(dest, options={})
       @session.copy path, dest, options
     end
     alias :cp :copy
 
-    # Delegates to Dropbox::Session#delete.
+    # Delegates to Dropbox::API#delete.
 
     def delete(options={})
       @session.delete path, options
     end
     alias :rm :delete
 
-    # Delegates to Dropbox::Session#download.
+    # Delegates to Dropbox::API#download.
 
     def download(options={})
       @session.download path, options
     end
     alias :body :download
 
-    # Delegates to Dropbox::Session#link.
+    # Delegates to Dropbox::API#link.
 
     def link(options={})
       @session.link path, options

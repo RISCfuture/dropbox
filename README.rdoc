@@ -1,10 +1,72 @@
-= dropbox
+= Ruby Dropbox Gem
 
-An easy-to-use interface to the RESTful Dropbox API.
+An easy-to-use third-party interface to the RESTful Dropbox API.
 
 == Tutorial by Example
 
-(Coming up real soon.)
+First things first: Be sure you've gotten a consumer key and secret from
+http://developers.dropbox.com
+
+ # STEP 1: Authorize the user
+ session = Dropbox::Session.new('your_consumer_key', 'your_consumer_secret')
+ puts "Visit #{session.authorize_url} to log in to Dropbox. Hit enter when you have done this."
+ gets
+ session.authorize
+ session.sandbox = true
+
+ # STEP 2: Play!
+ session.upload('testfile.txt')
+ uploaded_file = session.file('testfile.txt')
+ puts uploaded_file.metadata.size
+
+ uploaded_file.move 'new_name.txt'
+ uploaded_file.delete
+
+== Tutorial by Example, Rails Edition
+
+A simple Rails controller that allows a user to first authorize their Dropbox
+account, and then upload a file to their Dropbox.
+
+ class DropboxController < ApplicationController
+   def authorize
+     if params[:oauth_token] then
+       dropbox_session = Dropbox::Session.deserialize(session[:dropbox_session])
+       dropbox_session.authorize(params)
+       session[:dropbox_session] = dropbox_session.serialize # re-serialize the authenticated session
+
+       redirect_to :action => 'upload'
+     else
+       dropbox_session = Dropbox::Session.new('your_consumer_key', 'your_consumer_secret')
+       session[:dropbox_session] = dropbox_session.serialize
+       redirect_to dropbox_session.authorize_url(:oauth_callback => url_for(:action => 'authorize'))
+     end
+   end
+
+   def upload
+     return redirect_to(:action => 'authorize') unless session[:dropbox_session]
+     dropbox_session = Dropbox::Session.deserialize(session[:dropbox_session])
+     return redirect_to(:action => 'authorize') unless dropbox_session.authorized?
+
+     if request.method == :post then
+       dropbox_session.upload params[:file], 'My Uploads', :sandbox => true
+       render :text => 'Uploaded OK'
+     else
+       # display a multipart file field form
+     end
+   end
+ end
+
+== Features and Where to Find Them
+
+* Start with the Dropbox::Session class. The first thing you should do is
+  authenticate your users and that class is how to do it.
+* The Dropbox::API module (attached to the Dropbox::Session class) is the meat
+  and potatoes. Use it to modify a user's Dropbox.
+* The Dropbox::Entry class is a more object-oriented way of manipulating files.
+  It's totally optional; check it out if you like OOP.
+* The Dropbox::Memoization module has some handy utility methods for memoizing
+  server responses to reduce network calls. It's plug-in compatible with any
+  caching strategy you might already have (memcache, etc.).
 
 == Note on Patches/Pull Requests
  
@@ -14,7 +76,7 @@ An easy-to-use interface to the RESTful Dropbox API.
   future version unintentionally.
 * Commit, do not mess with rakefile, version, or history.
   (if you want to have your own version, that is fine but
-   bump version in a commit by itself I can ignore when I pull)
+  bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
 == Copyright
