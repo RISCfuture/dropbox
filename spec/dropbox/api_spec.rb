@@ -19,6 +19,25 @@ def should_receive_api_method_with_arguments(object, method, api_method, argumen
   end
 end
 
+def stub_for_upload_testing
+  @consumer_mock.stub!(:key).and_return("consumer key")
+  @consumer_mock.stub!(:secret).and_return("consumer secret")
+  @consumer_mock.stub!(:sign!).and_return { |req, _| req.stub!(:to_hash).and_return('authorization' => ["Oauth", "test"]) }
+
+  @token_mock.stub!(:token).and_return("access token")
+  @token_mock.stub!(:secret).and_return("access secret")
+
+  @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(true)
+  @response.stub!(:body).and_return('{"test":"val"}')
+
+  Net::HTTP.stub!(:start).and_return(@response)
+end
+
+def response_acts_as(subclass)
+  @response.stub(:kind_of?).and_return(false)
+  @response.stub(:kind_of?).with(subclass).and_return(true) if subclass
+end
+
 describe Dropbox::API do
   before :each do
     @consumer_mock = mock("OAuth::Consumer")
@@ -105,18 +124,14 @@ describe Dropbox::API do
     end
 
     it "should re-raise 404's as FileNotFoundErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPNotFound
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::FileNotFoundError)
     end
 
     it "should re-raise 403's as FileExistsErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPForbidden
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::FileExistsError)
@@ -165,27 +180,21 @@ describe Dropbox::API do
     end
 
     it "should re-raise 404's as FileNotFoundErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPNotFound
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.move('a', 'b') }.should raise_error(Dropbox::FileNotFoundError)
     end
 
     it "should re-raise 403's as FileExistsErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPForbidden
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.move('a', 'b') }.should raise_error(Dropbox::FileExistsError)
     end
 
     it "should raise other errors unmodified" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as nil
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.move('a', 'b') }.should raise_error(Dropbox::UnsuccessfulResponseError)
@@ -233,16 +242,14 @@ describe Dropbox::API do
     end
 
     it "should re-raise 403's as FileExistsErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPForbidden
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.create_folder('a') }.should raise_error(Dropbox::FileExistsError)
     end
 
     it "should raise other errors unmodified" do
-      @response.stub(:kind_of?).with(Net::HTTPForbidden).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as nil
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.create_folder('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
@@ -271,16 +278,14 @@ describe Dropbox::API do
     end
 
     it "should re-raise 404's as FileNotFoundErrors" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(true)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPNotFound
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.delete('a') }.should raise_error(Dropbox::FileNotFoundError)
     end
     
     it "should raise other errors unmodified" do
-      @response.stub(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as nil
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.delete('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
@@ -290,8 +295,7 @@ describe Dropbox::API do
   describe "#link" do
     before :each do
       @response.stub!(:code).and_return(304)
-      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
-      @response.stub!(:kind_of?).with(Net::HTTPFound).and_return(true)
+      response_acts_as Net::HTTPFound
       @response.stub!(:[]).and_return("new location")
     end
 
@@ -311,7 +315,7 @@ describe Dropbox::API do
     end
 
     it "should re-raise other errors unmodified" do
-      @response.stub!(:kind_of?).with(Net::HTTPFound).and_return(false)
+      response_acts_as nil
       @token_mock.stub!(:get).and_return(@response)
       lambda { @session.link('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
@@ -343,27 +347,21 @@ describe Dropbox::API do
     end
 
     it "should rescue 406's and re-raise them as TooManyEntriesErrors" do
-      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(true)
-      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPNotAcceptable
       @token_mock.stub!(:get).and_return(@response)
       
       lambda { @session.metadata('a') }.should raise_error(Dropbox::TooManyEntriesError)
     end
 
     it "should rescue 404's and re-raise them as FileNotFoundErrors" do
-      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(false)
-      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(true)
-      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as Net::HTTPNotFound
       @token_mock.stub!(:get).and_return(@response)
 
       lambda { @session.metadata('a') }.should raise_error(Dropbox::FileNotFoundError)
     end
 
     it "should re-raise other errors unmodified" do
-      @response.stub!(:kind_of?).with(Net::HTTPNotAcceptable).and_return(false)
-      @response.stub!(:kind_of?).with(Net::HTTPNotFound).and_return(false)
-      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(false)
+      response_acts_as nil
       @token_mock.stub!(:get).and_return(@response)
 
       lambda { @session.metadata('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
@@ -392,17 +390,7 @@ describe Dropbox::API do
 
   describe "#upload" do
     before :each do
-      @consumer_mock.stub!(:key).and_return("consumer key")
-      @consumer_mock.stub!(:secret).and_return("consumer secret")
-      @consumer_mock.stub!(:sign!).and_return { |req, _| req.stub!(:to_hash).and_return('authorization' => ["Oauth", "test"]) }
-
-      @token_mock.stub!(:token).and_return("access token")
-      @token_mock.stub!(:secret).and_return("access secret")
-
-      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(true)
-      @response.stub!(:body).and_return('{"test":"val"}')
-
-      Net::HTTP.stub!(:start).and_return(@response)
+      stub_for_upload_testing
     end
 
     describe "parameters" do
@@ -490,6 +478,37 @@ describe Dropbox::API do
         Net::HTTP.should_receive(:start).once.with(uri.host, uri.port).and_return(@response)
 
         @session.upload __FILE__, 'test'
+      end
+    end
+  end
+
+  {
+          :account => [ :get ],
+          :upload => [ :post, __FILE__, 'path/here' ],
+          :copy => [ :post, 'source/file', 'dest/file' ],
+          :move => [ :post, 'source/file', 'dest/file' ],
+          :create_folder => [ :post, 'new/folder' ],
+          :metadata => [ :get, 'some/file' ]
+  }.each do |meth, args|
+    describe meth do
+      before :each do
+        stub_for_upload_testing
+        @token_mock.stub!(args.first).and_return(@response)
+      end
+
+      it "should parse the JSON response if successful" do
+        @response.stub!(:body).and_return('{"test":"json"}')
+        @session.send(meth, *(args[1..-1]))
+      end
+
+      it "should raise a ParseError if the JSON is invalid" do
+        @response.stub!(:body).and_return('sdgsdg')
+        lambda { @session.send(meth, *(args[1..-1])) }.should raise_error(Dropbox::ParseError)
+      end
+
+      it "should raise UnsuccessfulResponseError if unsuccessful" do
+        @response.stub!(:kind_of?).and_return(false)
+        lambda { @session.send(meth, *(args[1..-1])) }.should raise_error(Dropbox::UnsuccessfulResponseError)
       end
     end
   end
