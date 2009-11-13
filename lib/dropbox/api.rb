@@ -38,6 +38,16 @@ module Dropbox
   module API
     include Dropbox::Memoization
 
+    # Returns a Dropbox::Entry instance that can be used to work with files or
+    # directories in an object-oriented manner.
+
+    def entry(path)
+      Dropbox::Entry.new(self, path)
+    end
+    alias :file :entry
+    alias :directory :entry
+    alias :dir :entry
+
     # Returns a Struct with information about the user's account. See
     # http://developers.dropbox.com/python/base.html#account-info for more
     # information on the data returned.
