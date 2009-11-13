@@ -19,7 +19,7 @@ class Hash # :nodoc:
 
   def to_struct # :nodoc:
     Struct.new(*keys).new(*values)
-  end unless method_defined?(:to_struct)
+  end
 
   def to_struct_recursively # :nodoc:
     hsh = dup

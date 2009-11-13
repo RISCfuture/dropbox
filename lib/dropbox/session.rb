@@ -125,7 +125,7 @@ module Dropbox
     end
 
     def inspect # :nodoc:
-      "#<#{self.class.to_s} #{@consumer.key}>"
+      "#<#{self.class.to_s} #{@consumer.key} (#{'un' unless authorized?}authorized)>"
     end
 
     private
