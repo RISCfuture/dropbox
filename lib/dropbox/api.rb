@@ -448,17 +448,15 @@ module Dropbox
       @response = response
     end
 
-    def message # :nodoc:
+    def to_s # :nodoc:
       "API error: #{request}"
     end
-    alias :to_s :message
-    alias :to_str :message
   end
 
   # Raised when the Dropbox API returns a response that was not understood.
 
   class ParseError < APIError
-    def message # :nodoc:
+    def to_s # :nodoc:
       "Invalid response received: #{request}"
     end
   end
@@ -466,7 +464,7 @@ module Dropbox
   # Raised when something other than 200 OK is returned by an API method.
 
   class UnsuccessfulResponseError < APIError
-    def message # :nodoc:
+    def to_s # :nodoc:
       "HTTP status #{@response.class.to_s} received: #{request}"
     end
   end
@@ -481,11 +479,9 @@ module Dropbox
       @path = path
     end
 
-    def message # :nodoc:
+    def to_s # :nodoc:
       "#{self.class.to_s}: #{@path}"
     end
-    alias :to_s :message
-    alias :to_str :message
   end
 
   # Raised when a Dropbox file doesn't exist.
