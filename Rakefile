@@ -16,6 +16,7 @@ begin
     gem.add_development_dependency "rspec", ">= 1.2.9"
     gem.add_runtime_dependency "oauth", ">= 0.3.6"
     gem.add_runtime_dependency "json", ">= 1.2.0"
+    gem.add_runtime_dependency "multipart-post", ">= 1.0"
 
     gem.rubyforge_project = "dropbox"
   end

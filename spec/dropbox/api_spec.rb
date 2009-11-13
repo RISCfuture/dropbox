@@ -21,12 +21,12 @@ end
 
 describe Dropbox::API do
   before :each do
-    consumer_mock = mock("OAuth::Consumer")
+    @consumer_mock = mock("OAuth::Consumer")
     token_mock = mock("OAuth::RequestToken")
     @token_mock = mock("OAuth::AccessToken")
     token_mock.stub!(:get_access_token).and_return(@token_mock)
-    consumer_mock.stub!(:get_request_token).and_return(token_mock)
-    OAuth::Consumer.stub!(:new).and_return(consumer_mock)
+    @consumer_mock.stub!(:get_request_token).and_return(token_mock)
+    OAuth::Consumer.stub!(:new).and_return(@consumer_mock)
 
     @session = Dropbox::Session.new('foo', 'bar')
     @session.authorize
@@ -387,6 +387,110 @@ describe Dropbox::API do
       @session.should_receive(:metadata).once.with('my/file', hash_including(:hash => true, :suppress_list => false)).and_return(@response)
 
       @session.list('my/file', :suppress_list => true, :hash => true)
+    end
+  end
+
+  describe "#upload" do
+    before :each do
+      @consumer_mock.stub!(:key).and_return("consumer key")
+      @consumer_mock.stub!(:secret).and_return("consumer secret")
+      @consumer_mock.stub!(:sign!).and_return { |req, _| req.stub!(:to_hash).and_return('authorization' => ["Oauth", "test"]) }
+
+      @token_mock.stub!(:token).and_return("access token")
+      @token_mock.stub!(:secret).and_return("access secret")
+
+      @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(true)
+      @response.stub!(:body).and_return('{"test":"val"}')
+
+      Net::HTTP.stub!(:start).and_return(@response)
+    end
+
+    describe "parameters" do
+      describe "given a File object" do
+        before :each do
+          @file = File.open(__FILE__)
+        end
+
+        after :each do
+          @file.close
+        end
+
+        it "should use the File object as the stream" do
+          UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
+          @session.upload @file, 'remote/'
+        end
+      end
+
+      describe "given a String object" do
+        before :each do
+          @string = __FILE__
+          @file = File.new(__FILE__)
+          File.should_receive(:new).once.with(@string).and_return(@file)
+        end
+
+        it "should use the file at that path as the stream" do
+          UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
+          @session.upload @string, 'remote/'
+        end
+      end
+
+      it "should raise an error if given an unknown argument type" do
+        lambda { @session.upload 123, 'path' }.should raise_error(ArgumentError)
+      end
+    end
+
+    describe "request" do
+      before :each do
+        @request = mock('Net::HTTPRequest')
+        @request.stub!(:[]=)
+      end
+
+      it "should strip a leading slash from the remote path" do
+        Net::HTTP::Post::Multipart.should_receive(:new).once do |*args|
+          args.first.should eql("/#{Dropbox::VERSION}/files/dropbox/path")
+          @request
+        end
+
+        @session.upload __FILE__, '/path'
+      end
+
+      it "should call the files API method" do
+        Net::HTTP::Post::Multipart.should_receive(:new).once do |*args|
+          args.first.should eql("/#{Dropbox::VERSION}/files/dropbox/path/to/file")
+          @request
+        end
+
+        @session.upload __FILE__, 'path/to/file'
+      end
+
+      it "should use the sandbox root if specified" do
+        Net::HTTP::Post::Multipart.should_receive(:new).once do |*args|
+          args.first.should eql("/#{Dropbox::VERSION}/files/sandbox/path/to/file")
+          @request
+        end
+
+        @session.upload __FILE__, 'path/to/file', :sandbox => true
+      end
+
+      it "should set the authorization content header to the signed OAuth request" do
+        Net::HTTP::Post::Multipart.stub!(:new).and_return(@request)
+        @request.should_receive(:[]=).once.with('authorization', 'Oauth, test')
+
+        @session.upload __FILE__, 'blah'
+      end
+
+      it "should create a multipart POST request with the 'file' parameter set to the file of type application/octet-stream" do
+        Net::HTTP::Post::Multipart.should_receive(:new).once.with("/#{Dropbox::VERSION}/files/dropbox/hello", hash_including('file' => an_instance_of(File))).and_return(@request)
+
+        @session.upload __FILE__, 'hello'
+      end
+
+      it "should send the request" do
+        uri = URI.parse(Dropbox::ALTERNATE_HOSTS['files'])
+        Net::HTTP.should_receive(:start).once.with(uri.host, uri.port).and_return(@response)
+
+        @session.upload __FILE__, 'test'
+      end
     end
   end
 

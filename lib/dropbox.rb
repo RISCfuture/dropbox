@@ -6,6 +6,7 @@ require 'digest/sha1'
 require 'thread'
 require 'set'
 require 'time'
+require 'tempfile'
 
 Dir.glob("#{File.expand_path File.dirname(__FILE__)}/extensions/*.rb") { |file| require file }
 Dir.glob("#{File.expand_path File.dirname(__FILE__)}/dropbox/*.rb") { |file| require file }

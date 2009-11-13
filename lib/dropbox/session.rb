@@ -135,6 +135,14 @@ module Dropbox
     def access_token
       @access_token || raise(UnauthorizedError, "You need to authorize the Dropbox user before you can call API methods")
     end
+
+    def clone_with_host(host)
+      session = dup
+      consumer = OAuth::Consumer.new(@consumer.key, @consumer.secret, :site => host)
+      session.instance_variable_set :@consumer, consumer
+      session.instance_variable_set :@access_token, OAuth::AccessToken.new(consumer, @access_token.token, @access_token.secret)
+      return session
+    end
   end
 
   # Raised when trying to call Dropbox API methods without yet having completed

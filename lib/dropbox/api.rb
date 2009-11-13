@@ -2,6 +2,7 @@
 
 require "#{File.expand_path File.dirname(__FILE__)}/memoization"
 require 'json'
+require 'net/http/post/multipart'
 
 module Dropbox
 
@@ -64,6 +65,72 @@ module Dropbox
       path.sub! /^\//, ''
       api_body :get, 'files', root(options), *(path.split('/'))
       #TODO streaming, range queries
+    end
+
+    # Uploads a file to a path relative to the Dropbox or sandbox root. The
+    # +remote_path+ parameter is taken to be the path portion _only_; the name
+    # of the remote file will be identical to that of the local file. You can
+    # provide any of the following for the first parameter:
+    #
+    # * a +File+ object, in which case the name of the local file is used, or
+    # * a path to a file, in which case that file's name is used.
+    #
+    # Options:
+    #
+    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
+    #             mode.
+    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    #
+    # Examples:
+    #
+    #  session.upload 'music.pdf', '/' # upload a file by path to the root directory
+    #  session.upload 'music.pdf, 'music/' # upload a file by path to the music folder
+    #  session.upload File.new('music.pdf'), '/' # same as the first example
+
+    def upload(local_file, remote_path, options={})
+      if local_file.kind_of?(File) or local_file.kind_of?(Tempfile) then
+        file = local_file
+        name = local_file.respond_to?(:original_filename) ? local_file.original_filename : File.basename(local_file.path)
+        local_path = local_file.path
+      elsif local_file.kind_of?(String) then
+        file = File.new(local_file)
+        name = File.basename(local_file)
+        local_path = local_file
+      else
+        raise ArgumentError, "local_file must be a File or file path"
+      end
+
+      remote_path.sub! /^\//, ''
+      remote_path = remote_path.split('/')
+
+      url = Dropbox.api_url('files', root(options), *remote_path)
+      uri = URI.parse(url)
+
+      oauth_request = Net::HTTP::Post.new(uri.path)
+      oauth_request.set_form_data 'file' => name
+
+      alternate_host_session = clone_with_host(Dropbox::ALTERNATE_HOSTS['files'])
+      alternate_host_session.instance_variable_get(:@consumer).sign!(oauth_request, @access_token)
+      oauth_signature = oauth_request.to_hash['authorization']
+
+      request = Net::HTTP::Post::Multipart.new(uri.path,
+                                               'file' => UploadIO.convert!(
+                                                       file,
+                                                       'application/octet-stream',
+                                                       name,
+                                                       local_path))
+      request['authorization'] = oauth_signature.join(', ')
+      
+      response = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
+      if response.kind_of?(Net::HTTPSuccess) then
+        begin
+          return JSON.parse(response.body).symbolize_keys_recursively.to_struct_recursively
+        rescue JSON::ParserError
+          raise ParseError.new(uri.to_s, response)
+        end
+      else
+        raise UnsuccessfulResponseError.new(uri.to_s, response)
+      end
     end
 
     # Copies the +source+ file to the path at +target+. If +target+ ends with a
