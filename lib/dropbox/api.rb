@@ -19,24 +19,38 @@ module Dropbox
   # You can opt-in to memoization of API method results. See the
   # Dropbox::Memoization class documentation to learn more.
   #
-  # == Sandboxing
+  # == Modes
   #
-  # The Dropbox API includes a feature called "Sandboxing" whereby all
-  # operations on files are limited to a sandbox folder within the user's
-  # Dropbox. If your credentials allow you sandbox access only, you should set
-  # the +sandbox+ attribute:
+  # The Dropbox API works in three modes: sandbox, Dropbox (root), and
+  # metadata-only.
   #
-  #  session.sandbox = true
+  # * In sandbox mode (the default), all operations are rooted from your
+  #   application's sandbox folder; other files elsewhere on the user's Dropbox
+  #   are inaccessible.
+  # * In Dropbox mode, the root is the user's Dropbox folder, and all files are
+  #   accessible. This mode is typically only available to certain API users.
+  # * In metadata-only mode, the root is the Dropbox folder, but read-only
+  #   access is not available. Operations that modify the user's files will
+  #  fail.
   #
-  # After setting this attribute, file manipulation will be performed within the
-  # sandbox environment.
+  # You should configure the Dropbox::Session instance to use whichever mode
+  # you chose when you set up your application:
   #
-  # Most file-related operations take options that allow you to temporarily
-  # revert into our out of sandbox mode, regardless of the value of the
-  # +sandbox+ attribute.
+  #  session.mode = :metadata_only
+  #
+  # Valid values are listed in Dropbox::API::MODES, and this step is not
+  # necessary for sandboxed applications, as the sandbox mode is the default.
+  #
+  # You can also temporarily change the mode for many method calls using their
+  # options hash:
+  #
+  #  session.move 'my_file', 'new/path', :mode => :dropbox
 
   module API
     include Dropbox::Memoization
+
+    # Valid API modes for the #mode= method.
+    MODES = [ :sandbox, :dropbox, :metadata_only ]
 
     # Returns a Dropbox::Entry instance that can be used to work with files or
     # directories in an object-oriented manner.
@@ -57,9 +71,8 @@ module Dropbox
     end
     memoize :account
 
-    # Downloads the file at the given path relative to the Dropbox root. If
-    # the +sandbox+ attribute is set to true, takes the path to be relative to
-    # the sandbox root.
+    # Downloads the file at the given path relative to the configured mode's
+    # root.
     #
     # Returns the contents of the downloaded file as a +String+. Support for
     # streaming downloads and range queries is available server-side, but not
@@ -67,9 +80,7 @@ module Dropbox
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
 
     def download(path, options={})
       path.sub! /^\//, ''
@@ -77,7 +88,7 @@ module Dropbox
       #TODO streaming, range queries
     end
 
-    # Uploads a file to a path relative to the Dropbox or sandbox root. The
+    # Uploads a file to a path relative to the configured mode's root. The
     # +remote_path+ parameter is taken to be the path portion _only_; the name
     # of the remote file will be identical to that of the local file. You can
     # provide any of the following for the first parameter:
@@ -87,9 +98,7 @@ module Dropbox
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # Examples:
     #
@@ -147,17 +156,14 @@ module Dropbox
     # slash, the new file will share the same name as the old file. Returns a
     # +Struct+ with metadata for the new file. (See the metadata method.)
     #
-    # Both paths are assumed to be relative to the Dropbox root, or if sandbox
-    # is enabled, the sandbox root.
+    # Both paths are assumed to be relative to the configured mode's root.
     #
     # Raises FileNotFoundError if +source+ does not exist. Raises
     # FileExistsError if +target+ already exists.
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
@@ -176,16 +182,14 @@ module Dropbox
     alias :cp :copy
 
     # Creates a folder at the given path. The path is assumed to be relative to
-    # the Dropbox root, or if sandbox is enabled, the sandbox root. Returns a
-    # +Struct+ with metadata about the new folder. (See the metadata method.)
+    # the configured mode's root. Returns a +Struct+ with metadata about the new
+    # folder. (See the metadata method.)
     #
     # Raises FileExistsError if there is already a file or folder at +path+.
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # TODO The API documentation says this method returns 403 if the path already exists, but it actually appends " (1)" to the end of the name and returns 200.
 
@@ -202,15 +206,13 @@ module Dropbox
     alias :mkdir :create_folder
 
     # Deletes a file or folder at the given path. The path is assumed to be
-    # relative to the Dropbox root, or if sandbox is enabled, the sandbox root.
+    # relative to the configured mode's root.
     #
     # Raises FileNotFoundError if the file or folder does not exist at +path+.
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # TODO The API documentation says this method returns 404 if the path does not exist, but it actually returns 5xx.
     
@@ -233,17 +235,14 @@ module Dropbox
     # also the rename method). Returns a +Struct+ with metadata for the new
     # file. (See the metadata method.)
     #
-    # Both paths are assumed to be relative to the Dropbox root, or if sandbox
-    # is enabled, the sandbox root.
+    # Both paths are assumed to be relative to the configured mode's root.
     #
     # Raises FileNotFoundError if +source+ does not exist. Raises
     # FileExistsError if +target+ already exists.
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
@@ -284,14 +283,11 @@ module Dropbox
     # Returns a cookie-protected URL that the authorized user can use to view
     # the file at the given path. This URL requires an authorized user.
     #
-    # The path is assumed to be relative to the Dropbox root, or if sandbox is
-    # enabled, the sandbox root.
+    # The path is assumed to be relative to the configured mode's root.
     #
     # Options:
     #
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
 
     def link(path, options={})
       path.sub! /^\//, ''
@@ -306,8 +302,7 @@ module Dropbox
     memoize :link
 
     # Returns a +Struct+ containing metadata on a given file or folder. The path
-    # is assumed to be relative to the Dropbox root, or if sandbox is enabled,
-    # the sandbox root.
+    # is assumed to be relative to the configured mode's root.
     #
     # If you pass a directory for +path+, the metadata will also contain a
     # listing of the directory contents (unless the +suppress_list+ option is
@@ -323,9 +318,7 @@ module Dropbox
     # +limit+:: Set this value to limit the number of entries returned when
     #           listing a directory. If the result has more than this number of
     #           entries, a TooManyEntriesError will be raised.
-    # +sandbox+:: If true, and not in sandbox mode, temporarily uses sandbox
-    #             mode.
-    # +dropbox+:: If true, and in sandbox mode, temporarily leaves sandbox mode.
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # TODO hash option seems to return HTTPBadRequest for now
 
@@ -372,16 +365,17 @@ module Dropbox
     end
     alias :ls :list
 
-    # Returns true if this session is in sandboxed mode.
+    # Returns the configured API mode.
 
-    def sandbox?
-      @sandbox.to_bool
+    def mode
+      @api_mode ||= :sandbox
     end
 
-    # Turns on or off sandboxed mode.
+    # Sets the API mode. See the MODES array.
 
-    def sandbox=(val)
-      @sandbox = val.to_bool
+    def mode=(newmode)
+      raise ArgumentError, "Unknown API mode #{newmode.inspect}" unless MODES.include?(newmode)
+      @api_mode = newmode
     end
 
     private
@@ -394,11 +388,9 @@ module Dropbox
     end
 
     def root(options={})
-      if sandbox? then
-        return options[:dropbox] ? 'dropbox' : 'sandbox'
-      else
-        return options[:sandbox] ? 'sandbox' : 'dropbox'
-      end
+      api_mode = options[:mode] || mode
+      raise ArgumentError, "Unknown API mode #{api_mode.inspect}" unless MODES.include?(api_mode)
+      return api_mode == :sandbox ? 'sandbox' : 'dropbox'
     end
 
     def get(*params)
