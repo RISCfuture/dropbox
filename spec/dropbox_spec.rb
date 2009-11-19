@@ -21,4 +21,19 @@ describe Dropbox do
       Dropbox.api_url("foo space", "amp&ersand" => 'eq=uals').should eql(@prefix + "foo%20space?amp%26ersand=eq%3Duals")
     end
   end
+
+  describe ".check_path" do
+    it "should raise an exception if the path contains a backslash" do
+      lambda { Dropbox.check_path "hello\\there" }.should raise_error(ArgumentError)
+    end
+
+    it "should raise an exception if the path is longer than 256 characters" do
+      lambda { Dropbox.check_path "a"*257 }.should raise_error(ArgumentError)
+    end
+
+    it "should otherwise return the path unchanged" do
+      path = "valid path/here"
+      lambda { Dropbox.check_path(path).should eql(path) }.should_not raise_error
+    end
+  end
 end

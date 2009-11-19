@@ -29,4 +29,10 @@ module Dropbox
     url << "?#{params.map { |k,v| CGI.escape(k.to_s) + "=" + CGI.escape(v.to_s) }.join('&')}" unless params.empty?
     return url
   end
+
+  def self.check_path(path) # :nodoc:
+    raise ArgumentError, "Backslashes are not allowed in Dropbox paths" if path.include?('\\')
+    raise ArgumentError, "Dropbox paths are limited to 256 characters in length" if path.size > 256
+    return path
+  end
 end

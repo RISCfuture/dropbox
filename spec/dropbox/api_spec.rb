@@ -87,6 +87,14 @@ describe Dropbox::API do
       @token_mock.stub!(:get).and_return(@response)
       @session.download("path/to/file").should eql("response body")
     end
+
+    it "should check the path" do
+      path = "test/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:get).and_return(@response)
+
+      @session.download(path)
+    end
   end
 
   describe "#copy" do
@@ -142,6 +150,16 @@ describe Dropbox::API do
       @token_mock.stub!(:post).and_return(@response)
 
       lambda { @session.copy('a', 'b') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+
+    it "should check the source and destination paths" do
+      source_path = "source/path"
+      dest_path = "dest/path"
+      Dropbox.should_receive(:check_path).once.with(source_path).and_return(source_path)
+      Dropbox.should_receive(:check_path).once.with(dest_path).and_return(dest_path)
+      @token_mock.stub!(:post).and_return(@response)
+
+      @session.copy(source_path, dest_path)
     end
   end
 
@@ -199,6 +217,16 @@ describe Dropbox::API do
 
       lambda { @session.move('a', 'b') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
+
+    it "should check the source and destination paths" do
+      source_path = "source/path"
+      dest_path = "dest/path"
+      Dropbox.should_receive(:check_path).once.with(source_path).and_return(source_path)
+      Dropbox.should_receive(:check_path).once.with(dest_path).and_return(dest_path)
+      @token_mock.stub!(:post).and_return(@response)
+
+      @session.move(source_path, dest_path)
+    end
   end
 
   describe "#rename" do
@@ -254,6 +282,14 @@ describe Dropbox::API do
 
       lambda { @session.create_folder('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
+
+    it "should check the path" do
+      path = "source/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:post).and_return(@response)
+
+      @session.create_folder(path)
+    end
   end
 
   describe "#delete" do
@@ -290,6 +326,14 @@ describe Dropbox::API do
 
       lambda { @session.delete('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
+
+    it "should check the path" do
+      path = "source/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:post).and_return(@response)
+
+      @session.delete(path)
+    end
   end
 
   describe "#link" do
@@ -318,6 +362,14 @@ describe Dropbox::API do
       response_acts_as nil
       @token_mock.stub!(:get).and_return(@response)
       lambda { @session.link('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+
+    it "should check the path" do
+      path = "source/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:get).and_return(@response)
+
+      @session.link(path)
     end
   end
 
@@ -366,6 +418,14 @@ describe Dropbox::API do
 
       lambda { @session.metadata('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
     end
+
+    it "should check the path" do
+      path = "source/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:get).and_return(@response)
+
+      @session.metadata(path)
+    end
   end
 
   describe "#list" do
@@ -391,6 +451,12 @@ describe Dropbox::API do
   describe "#upload" do
     before :each do
       stub_for_upload_testing
+    end
+
+    it "should check the path" do
+      path = "dest/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @session.upload(__FILE__, path)
     end
 
     describe "parameters" do

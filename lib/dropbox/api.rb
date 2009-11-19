@@ -84,7 +84,7 @@ module Dropbox
 
     def download(path, options={})
       path.sub! /^\//, ''
-      api_body :get, 'files', root(options), *(path.split('/'))
+      api_body :get, 'files', root(options), *(Dropbox.check_path(path).split('/'))
       #TODO streaming, range queries
     end
 
@@ -120,7 +120,7 @@ module Dropbox
       end
 
       remote_path.sub! /^\//, ''
-      remote_path = remote_path.split('/')
+      remote_path = Dropbox.check_path(remote_path).split('/')
 
       url = Dropbox.api_url('files', root(options), *remote_path)
       uri = URI.parse(url)
@@ -172,7 +172,7 @@ module Dropbox
       target.sub! /^\//, ''
       target << File.basename(source) if target.ends_with?('/')
       begin
-        parse_metadata(post('fileops', 'copy', :from_path => source, :to_path => target, :root => root(options))).to_struct_recursively
+        parse_metadata(post('fileops', 'copy', :from_path => Dropbox.check_path(source), :to_path => Dropbox.check_path(target), :root => root(options))).to_struct_recursively
       rescue UnsuccessfulResponseError => error
         raise FileNotFoundError.new(source) if error.response.kind_of?(Net::HTTPNotFound)
         raise FileExistsError.new(target) if error.response.kind_of?(Net::HTTPForbidden)
@@ -197,7 +197,7 @@ module Dropbox
       path.sub! /^\//, ''
       path.sub! /\/$/, ''
       begin
-        parse_metadata(post('fileops', 'create_folder', :path => path, :root => root(options))).to_struct_recursively
+        parse_metadata(post('fileops', 'create_folder', :path => Dropbox.check_path(path), :root => root(options))).to_struct_recursively
       rescue UnsuccessfulResponseError => error
         raise FileExistsError.new(path) if error.response.kind_of?(Net::HTTPForbidden)
         raise error
@@ -220,7 +220,7 @@ module Dropbox
       path.sub! /^\//, ''
       path.sub! /\/$/, ''
       begin
-        api_response(:post, 'fileops', 'delete', :path => path, :root => root(options))
+        api_response(:post, 'fileops', 'delete', :path => Dropbox.check_path(path), :root => root(options))
       rescue UnsuccessfulResponseError => error
         raise FileNotFoundError.new(path) if error.response.kind_of?(Net::HTTPNotFound)
         raise error
@@ -251,7 +251,7 @@ module Dropbox
       target.sub! /^\//, ''
       target << File.basename(source) if target.ends_with?('/')
       begin
-        parse_metadata(post('fileops', 'move', :from_path => source, :to_path => target, :root => root(options))).to_struct_recursively
+        parse_metadata(post('fileops', 'move', :from_path => Dropbox.check_path(source), :to_path => Dropbox.check_path(target), :root => root(options))).to_struct_recursively
       rescue UnsuccessfulResponseError => error
         raise FileNotFoundError.new(source) if error.response.kind_of?(Net::HTTPNotFound)
         raise FileExistsError.new(target) if error.response.kind_of?(Net::HTTPForbidden)
@@ -292,7 +292,7 @@ module Dropbox
     def link(path, options={})
       path.sub! /^\//, ''
       begin
-        api_response(:get, 'links', root(options), *(path.split('/')))
+        api_response(:get, 'links', root(options), *(Dropbox.check_path(path).split('/')))
       rescue UnsuccessfulResponseError => error
         return error.response['Location'] if error.response.kind_of?(Net::HTTPFound)
         #TODO shouldn't be using rescue blocks for normal program flow
@@ -328,7 +328,7 @@ module Dropbox
               'metadata',
               root(options)
               ]
-      args += path.split('/')
+      args += Dropbox.check_path(path).split('/')
       args << Hash.new
       args.last[:file_limit] = options[:limit] if options[:limit]
       #args.last[:hash] = options[:hash] if options[:hash]
