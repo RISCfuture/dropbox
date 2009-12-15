@@ -51,10 +51,15 @@ module Dropbox
     # Begins the authorization process. Provide the OAuth key and secret of your
     # API account, assigned by Dropbox. This is the first step in the
     # authorization process.
+    #
+    # Options:
+    #
+    # +ssl+:: If true, uses SSL to connect to the Dropbox API server.
 
-    def initialize(oauth_key, oauth_secret)
+    def initialize(oauth_key, oauth_secret, options={})
+      @ssl = options[:ssl].to_bool
       @consumer = OAuth::Consumer.new(oauth_key, oauth_secret,
-                                      :site => Dropbox::HOST,
+                                      :site => (@ssl ? Dropbox::SSL_HOST : Dropbox::HOST),
                                       :request_token_path => "/#{Dropbox::VERSION}/oauth/request_token",
                                       :authorize_path => "/#{Dropbox::VERSION}/oauth/authorize",
                                       :access_token_path => "/#{Dropbox::VERSION}/oauth/access_token")

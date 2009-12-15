@@ -545,6 +545,16 @@ describe Dropbox::API do
 
         @session.upload __FILE__, 'test'
       end
+      
+      it "should send an SSL request" do
+        @session = Dropbox::Session.new('foo', 'bar', :ssl => true)
+        @session.authorize
+        
+        uri = URI.parse(Dropbox::ALTERNATE_SSL_HOSTS['files'])
+        Net::HTTP.should_receive(:start).once.with(uri.host, uri.port).and_return(@response)
+
+        @session.upload __FILE__, 'test'
+      end
     end
   end
 
@@ -627,6 +637,37 @@ describe Dropbox::API do
       lambda { @session.mode = :foo }.should raise_error(ArgumentError)
     end
   end
+  
+  {
+    :account => [],
+    :copy => [ 'foo', 'bar' ],
+    :create_folder => [ 'foo' ],
+    :delete => [ 'foo' ],
+    :move => [ 'foo', 'bar' ],
+    :link => [ 'foo' ],
+    :metadata => [ 'foo'],
+    :download => [ 'foo' ]
+  }.each do |root_method, args|
+    describe ".#{root_method}" do
+      before :each do
+        @session = Dropbox::Session.new('foo', 'bar', :ssl => true)
+        @session.authorize
+        
+        @token_mock.stub!(:get).and_return(@response)
+        @token_mock.stub!(:post).and_return(@response)
+        @response.stub!(:body).and_return('{"a":"b"}')
+      end
+      
+      it "should use the SSL host if :ssl => true is given to the constructor" do
+        Dropbox.should_receive(:api_url).once do |*args|
+          args.last[:ssl].should be_true
+          "http://www.example.com/test"
+        end
+        
+        @session.send(root_method, *args)
+      end
+    end
+  end
 
   {
           :download => [ :get, 'path/to/file' ],
@@ -637,7 +678,7 @@ describe Dropbox::API do
           :link => [ :get, 'some/file' ],
           :metadata => [ :get, 'some/file' ]
   }.each do |root_method, args|
-    describe root_method do
+    describe ".#{root_method}" do
       before :each do
         @response.stub!(:body).and_return('{"a":"b"}')
       end
