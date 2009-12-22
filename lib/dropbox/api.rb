@@ -311,6 +311,9 @@ module Dropbox
     # For information on the schema of the return struct, see the Dropbox API
     # at http://developers.dropbox.com/python/base.html#metadata
     #
+    # The +modified+ key will be converted into a +Time+ instance. The +is_dir+
+    # key will also be available as <tt>directory?</tt>.
+    #
     # Options:
     #
     # +suppress_list+:: Set this to true to remove the directory list from
@@ -365,6 +368,20 @@ module Dropbox
       metadata(path, options.merge(:suppress_list => false)).contents
     end
     alias :ls :list
+    
+    def event_metadata(target_events, options={}) # :nodoc:
+      get 'event_metadata', :ssl => @ssl, :root => root(options), :target_events => target_events
+    end
+
+    def event_content(entry, options={}) # :nodoc:
+      request = Dropbox.api_url('event_content', :target_event => entry, :ssl => @ssl, :root => root(options))
+      response = api_internal(:get, request)
+      begin
+        return response.body, JSON.parse(response.header['X-Dropbox-Metadata'])
+      rescue JSON::ParserError
+        raise ParseError.new(request, response)
+      end
+    end
 
     # Returns the configured API mode.
 
@@ -383,6 +400,7 @@ module Dropbox
 
     def parse_metadata(hsh)
       hsh[:modified] = Time.parse(hsh[:modified]) if hsh[:modified]
+      hsh[:directory?] = hsh[:is_dir]
       hsh.each { |_,v| parse_metadata(v) if v.kind_of?(Hash) }
       hsh.each { |_,v| v.each { |h| parse_metadata(h) if h.kind_of?(Hash) } if v.kind_of?(Array) }
       hsh
@@ -489,4 +507,19 @@ module Dropbox
   # limit.
 
   class TooManyEntriesError < FileError; end
+  
+  # Raised when the event_metadata method returns an error.
+  
+  class PingbackError < StandardError
+    # The HTTP error code returned by the event_metadata method.
+    attr_reader :code
+    
+    def initialize(code) # :nodoc
+      @code = code
+    end
+    
+    def to_s # :nodoc:
+      "#{self.class.to_s} code #{@code}"
+    end
+  end
 end

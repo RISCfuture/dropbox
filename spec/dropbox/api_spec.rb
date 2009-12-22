@@ -13,7 +13,7 @@ def should_receive_api_method_with_arguments(object, method, api_method, argumen
     front.should eql("#{Dropbox::ALTERNATE_HOSTS[api_method] || Dropbox::HOST}/#{Dropbox::VERSION}/#{api_method}#{'/' + root if root}#{'/' + path if path}")
 
     query_params = url_args(url)
-    query_params.each { |key, val| arguments[key.to_sym].should eql(val) }
+    query_params.each { |key, val| val.should eql(arguments[key.to_sym]) }
     arguments.each { |key, _| query_params.should include(key.to_s) }
     response
   end
@@ -426,6 +426,29 @@ describe Dropbox::API do
 
       @session.metadata(path)
     end
+    
+    it "should recursively convert the modification date into a Time" do
+      time = Time.now
+      @response.stub!(:body).and_return({ :modified => time.to_s, :hsh => { :modified => time.to_s } }.to_json)
+      @token_mock.stub!(:get).and_return(@response)
+      
+      response = @session.metadata('path')
+      
+      response.modified.should be_kind_of(Time)
+      response.modified.to_i.should == time.to_i
+      response.hsh.modified.should be_kind_of(Time)
+      response.hsh.modified.to_i.should == time.to_i
+    end
+    
+    it "should add a directory? item recursively" do
+      @response.stub!(:body).and_return({ :is_dir => true, :hsh => { :is_dir => false } }.to_json)
+      @token_mock.stub!(:get).and_return(@response)
+      
+      response = @session.metadata('path')
+      
+      response.directory?.should be_true
+      response.hsh.directory?.should be_false
+    end
   end
 
   describe "#list" do
@@ -557,6 +580,40 @@ describe Dropbox::API do
       end
     end
   end
+  
+  describe "#event_metadata" do
+    it "should call the API method event_metadata" do
+      @response.stub!(:body).and_return('{"a":"b"}')
+      should_receive_api_method_with_arguments @token_mock, :get, 'event_metadata', { :root => 'sandbox', :target_events => 'event_json' }, @response
+      @session.event_metadata 'event_json'
+    end
+    
+    it "should return the JSON-parsed response" do
+      resp = { :some => { :json => 123 } }
+      @response.stub!(:body).and_return(resp.to_json)
+      @token_mock.stub!(:get).and_return(@response)
+      @session.event_metadata('event_json').should == resp
+    end
+  end
+
+  describe "#event_content" do
+    it "should call the API method event_content" do
+      @response.stub!(:body).and_return('content')
+      @response.stub!(:header).and_return('X-Dropbox-Metadata' => '{"a":"b"}')
+      should_receive_api_method_with_arguments @token_mock, :get, 'event_content', { :root => 'sandbox', :target_event => '1%3A2%3A3' }, @response
+      @session.event_content '1:2:3'
+    end
+
+    it "should return the content body and the X-Dropbox-Metadata header JSON" do
+      resp = { 'some' => { 'json' => 123 } }
+      body = "Content here"
+      @response.stub!(:body).and_return(body)
+      @response.should_receive(:header).once.and_return('X-Dropbox-Metadata' => resp.to_json)
+      @token_mock.stub!(:get).and_return(@response)
+      
+      @session.event_content('1:2:3').should == [ body, resp ]
+    end
+  end
 
   {
           :account => [ :get ],
@@ -564,7 +621,8 @@ describe Dropbox::API do
           :copy => [ :post, 'source/file', 'dest/file' ],
           :move => [ :post, 'source/file', 'dest/file' ],
           :create_folder => [ :post, 'new/folder' ],
-          :metadata => [ :get, 'some/file' ]
+          :metadata => [ :get, 'some/file' ],
+          :event_metadata => [ :get, 'some_json' ]
   }.each do |meth, args|
     describe meth do
       before :each do
@@ -646,7 +704,9 @@ describe Dropbox::API do
     :move => [ 'foo', 'bar' ],
     :link => [ 'foo' ],
     :metadata => [ 'foo'],
-    :download => [ 'foo' ]
+    :download => [ 'foo' ],
+    :event_metadata => [ 'foo' ],
+    :event_content => [ 'foo' ]
   }.each do |root_method, args|
     describe ".#{root_method}" do
       before :each do
@@ -656,6 +716,7 @@ describe Dropbox::API do
         @token_mock.stub!(:get).and_return(@response)
         @token_mock.stub!(:post).and_return(@response)
         @response.stub!(:body).and_return('{"a":"b"}')
+        @response.stub!(:header).and_return('X-Dropbox-Metadata' => '{"a":"b"}')
       end
       
       it "should use the SSL host if :ssl => true is given to the constructor" do
@@ -676,11 +737,14 @@ describe Dropbox::API do
           :create_folder => [ :post, 'new/folder' ],
           :delete => [ :post, 'some/file' ],
           :link => [ :get, 'some/file' ],
-          :metadata => [ :get, 'some/file' ]
+          :metadata => [ :get, 'some/file' ],
+          :event_metadata => [ :get, 'some_json' ],
+          :event_content => [ :get, '1:2:3' ]
   }.each do |root_method, args|
     describe ".#{root_method}" do
       before :each do
         @response.stub!(:body).and_return('{"a":"b"}')
+        @response.stub!(:header).and_return('X-Dropbox-Metadata' => '{"a":"b"}')
       end
 
       it "should use the dropbox root if in dropbox mode" do
