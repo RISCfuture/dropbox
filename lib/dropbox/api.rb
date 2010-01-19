@@ -84,7 +84,9 @@ module Dropbox
 
     def download(path, options={})
       path.sub! /^\//, ''
-      api_body :get, 'files', root(options), *(Dropbox.check_path(path).split('/')), :ssl => @ssl
+      rest = Dropbox.check_path(path).split('/')
+      rest << { :ssl => @ssl }
+      api_body :get, 'files', root(options), *rest
       #TODO streaming, range queries
     end
 
@@ -122,7 +124,8 @@ module Dropbox
       remote_path.sub! /^\//, ''
       remote_path = Dropbox.check_path(remote_path).split('/')
 
-      url = Dropbox.api_url('files', root(options), *remote_path, :ssl => @ssl)
+      remote_path << { :ssl => @ssl }
+      url = Dropbox.api_url('files', root(options), *remote_path)
       uri = URI.parse(url)
 
       oauth_request = Net::HTTP::Post.new(uri.path)
@@ -292,7 +295,9 @@ module Dropbox
     def link(path, options={})
       path.sub! /^\//, ''
       begin
-        api_response(:get, 'links', root(options), *(Dropbox.check_path(path).split('/')), :ssl => @ssl)
+        rest = Dropbox.check_path(path).split('/')
+        rest << { :ssl => @ssl }
+        api_response(:get, 'links', root(options), *rest)
       rescue UnsuccessfulResponseError => error
         return error.response['Location'] if error.response.kind_of?(Net::HTTPFound)
         #TODO shouldn't be using rescue blocks for normal program flow
