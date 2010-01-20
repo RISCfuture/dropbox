@@ -96,6 +96,7 @@ module Dropbox
     end
 
     def process_metadata(metadata)
+      p metadata
       metadata.each do |user_id, namespaces|
         namespaces.each do |namespace_id, journals|
           journals.each do |journal_id, attributes|

@@ -174,6 +174,7 @@ module Dropbox
     def postprocess_metadata
       @metadata[:size] = nil if @metadata[:size] == -1
       @metadata[:mtime] = (@metadata[:mtime] == -1 ? nil : Time.at(@metadata[:mtime])) if @metadata[:mtime]
+      @metadata[:ts] = Time.parse(@metadata[:ts]) if @metadata[:ts]
     end
   end
 

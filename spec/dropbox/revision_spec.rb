@@ -108,6 +108,28 @@ describe Dropbox::Revision do
       @revision.mtime.should be_kind_of(Time)
       @revision.mtime.to_i.should eql(time)
     end
+    
+    it "should leave the mtime attribute nil if nil" do
+      @session.stub!(:event_content).and_return([ "content", { :mtime => nil } ])
+      @revision.load @session
+
+      @revision.mtime.should be_nil
+    end
+
+    it "should convert the ts attribute to a Time" do
+      @session.stub!(:event_content).and_return([ "content", { :ts => "Thu, 21 Jan 2010 00:09:39 +0000" } ])
+      @revision.load @session
+
+      @revision.ts.should be_kind_of(Time)
+      @revision.ts.to_i.should eql(1264032579)
+    end
+    
+    it "should leave the ts attribute nil if nil" do
+      @session.stub!(:event_content).and_return([ "content", { :ts => nil } ])
+      @revision.load @session
+
+      @revision.ts.should be_nil
+    end
   end
 
   describe "#content_loaded?" do
@@ -317,6 +339,28 @@ describe Dropbox::Revision do
 
         @revision.mtime.should be_kind_of(Time)
         @revision.mtime.to_i.should eql(time)
+      end
+      
+      it "should leave the mtime attribute nil if nil" do
+        @metadata[:mtime] = nil
+        @revision.process_metadata @metadata
+
+        @revision.mtime.should be_nil
+      end
+      
+      it "should convert the ts attribute to a Time" do
+        @metadata[:ts] = "Thu, 21 Jan 2010 00:09:39 +0000"
+        @revision.process_metadata @metadata
+
+        @revision.ts.should be_kind_of(Time)
+        @revision.ts.to_i.should eql(1264032579)
+      end
+      
+      it "should leave the ts attribute nil if nil" do
+        @metadata[:ts] = nil
+        @revision.process_metadata @metadata
+
+        @revision.ts.should be_nil
       end
     end
   end
