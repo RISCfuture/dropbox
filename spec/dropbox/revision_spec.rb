@@ -178,6 +178,26 @@ describe Dropbox::Revision do
       @revision.should_not be_error
     end
   end
+  
+  describe "#deleted?" do
+    it "should raise an exception if the metadata is not yet loaded" do
+      lambda { @revision.deleted? }.should raise_error(Dropbox::NotLoadedError)
+    end
+    
+    it "should return true if mtime and size are nil" do
+      pretend_content_and_metadata_is_loaded(@revision, @session)
+      @revision.stub!(:mtime).and_return(nil)
+      @revision.stub!(:size).and_return(nil)
+      @revision.should be_deleted
+    end
+    
+    it "should return false if mtime and size are not nil" do
+      pretend_content_and_metadata_is_loaded(@revision, @session)
+      @revision.stub!(:mtime).and_return(Time.now)
+      @revision.stub!(:size).and_return(123)
+      @revision.should_not be_deleted
+    end
+  end
 
   describe "#content" do
     it "should raise an exception if the content is not yet loaded" do

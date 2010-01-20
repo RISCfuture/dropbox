@@ -105,6 +105,13 @@ module Dropbox
     def error?
       error.to_bool
     end
+    
+    # Returns true if this change represents the file being deleted.
+    
+    def deleted?
+      raise NotLoadedError.new(:metadata) unless metadata_loaded?
+      self.mtime.nil? and self.size.nil?
+    end
 
     # Returns the contents of the file as a string. Returns nil for directories.
     # You must call load first to retrieve the content from the network.
