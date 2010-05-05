@@ -4,10 +4,10 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "dropbox"
+    gem.name = "rdropbox"
     gem.version = File.read("VERSION").chomp.strip
-    gem.summary = %Q{Ruby Dropbox interface}
-    gem.description = %Q{An easy-to-use interface to the RESTful Dropbox API.}
+    gem.summary = %Q{Ruby client library for the official Dropbox API}
+    gem.description = %Q{An easy-to-use client library for the official Dropbox API.}
     gem.email = "dropbox@timothymorgan.info"
     gem.homepage = "http://github.com/RISCfuture/dropbox"
     gem.authors = ["Tim Morgan"]
