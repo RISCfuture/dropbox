@@ -2,6 +2,10 @@
 
 An easy-to-use third-party interface to the RESTful Dropbox API.
 
+== Installation
+
+ sudo gem install rdropbox
+
 == Tutorial by Example
 
 First things first: Be sure you've gotten a consumer key and secret from
@@ -12,7 +16,6 @@ http://developers.dropbox.com
  puts "Visit #{session.authorize_url} to log in to Dropbox. Hit enter when you have done this."
  gets
  session.authorize
- session.sandbox = true
 
  # STEP 2: Play!
  session.upload('testfile.txt')
@@ -48,7 +51,7 @@ account, and then upload a file to their Dropbox.
      return redirect_to(:action => 'authorize') unless dropbox_session.authorized?
 
      if request.method == :post then
-       dropbox_session.upload params[:file], 'My Uploads', :sandbox => true
+       dropbox_session.upload params[:file], 'My Uploads'
        render :text => 'Uploaded OK'
      else
        # display a multipart file field form
@@ -67,6 +70,8 @@ account, and then upload a file to their Dropbox.
 * The Dropbox::Memoization module has some handy utility methods for memoizing
   server responses to reduce network calls. It's plug-in compatible with any
   caching strategy you might already have (memcache, etc.).
+* If you're using pingbacks, check out Dropbox::Event and Dropbox::Revision.
+  Those classes parse pingbacks from Dropbox into Ruby objects.
 
 == Note on Patches/Pull Requests
  

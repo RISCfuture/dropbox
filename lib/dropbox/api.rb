@@ -29,9 +29,9 @@ module Dropbox
   #   are inaccessible.
   # * In Dropbox mode, the root is the user's Dropbox folder, and all files are
   #   accessible. This mode is typically only available to certain API users.
-  # * In metadata-only mode, the root is the Dropbox folder, but read-only
-  #   access is not available. Operations that modify the user's files will
-  #  fail.
+  # * In metadata-only mode, the root is the Dropbox folder, but write access
+  #   is not available. Operations that modify the user's files will
+  #   fail.
   #
   # You should configure the Dropbox::Session instance to use whichever mode
   # you chose when you set up your application:
