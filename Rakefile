@@ -4,7 +4,7 @@ require 'rake'
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "rdropbox"
+    gem.name = "dropbox"
     gem.version = File.read("VERSION").chomp.strip
     gem.summary = %Q{Ruby client library for the official Dropbox API}
     gem.description = %Q{An easy-to-use client library for the official Dropbox API.}
@@ -17,8 +17,6 @@ begin
     gem.add_runtime_dependency "oauth", ">= 0.3.6"
     gem.add_runtime_dependency "json", ">= 1.2.0"
     gem.add_runtime_dependency "multipart-post", ">= 1.0"
-
-    gem.rubyforge_project = "dropbox"
   end
   Jeweler::GemcutterTasks.new
   Jeweler::RubyforgeTasks.new

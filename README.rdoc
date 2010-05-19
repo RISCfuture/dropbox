@@ -4,7 +4,7 @@ An easy-to-use third-party interface to the RESTful Dropbox API.
 
 == Installation
 
- sudo gem install rdropbox
+ gem install dropbox
 
 == Tutorial by Example
 
