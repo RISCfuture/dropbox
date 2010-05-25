@@ -8,8 +8,19 @@ require 'set'
 require 'time'
 require 'tempfile'
 
-Dir.glob("#{File.expand_path File.dirname(__FILE__)}/extensions/*.rb") { |file| require file }
-Dir.glob("#{File.expand_path File.dirname(__FILE__)}/dropbox/*.rb") { |file| require file }
+require 'extensions/array'
+require 'extensions/hash'
+require 'extensions/module'
+require 'extensions/object'
+require 'extensions/string'
+require 'extensions/to_bool'
+
+require 'dropbox/memoization'
+require 'dropbox/api'
+require 'dropbox/entry'
+require 'dropbox/event'
+require 'dropbox/revision'
+require 'dropbox/session'
 
 # Container module for the all Dropbox API classes.
 

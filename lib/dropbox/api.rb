@@ -1,6 +1,5 @@
 # Defines the Dropbox::API module.
 
-require "#{File.expand_path File.dirname(__FILE__)}/memoization"
 require 'json'
 require 'net/http/post/multipart'
 
