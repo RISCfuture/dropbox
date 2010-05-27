@@ -62,8 +62,8 @@ module Dropbox
     alias :dir :entry
 
     # Returns a +Struct+ with information about the user's account. See
-    # http://developers.dropbox.com/python/base.html#account-info for more
-    # information on the data returned.
+    # https://www.dropbox.com/developers/docs#account-info for more information
+    # on the data returned.
 
     def account
       get('account', 'info', :ssl => @ssl).to_struct_recursively
@@ -360,7 +360,7 @@ module Dropbox
     # true).
     #
     # For information on the schema of the return struct, see the Dropbox API
-    # at http://developers.dropbox.com/python/base.html#metadata
+    # at https://www.dropbox.com/developers/docs#metadata
     #
     # The +modified+ key will be converted into a +Time+ instance. The +is_dir+
     # key will also be available as <tt>directory?</tt>.
