@@ -1,0 +1,10 @@
+1.1.0 (2010-05-27)
+
+* Added thumbnails API method.
+* Changed name of gem from rdropbox to dropbox.
+* Fixed potential dependency issues.
+* Documentation updates.
+
+1.0.0 (2010-05-05)
+
+* Initial release.

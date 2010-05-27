@@ -5,20 +5,22 @@
 
 Gem::Specification.new do |s|
   s.name = %q{dropbox}
-  s.version = "1.0.0"
+  s.version = "1.1.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Morgan"]
-  s.date = %q{2010-05-24}
+  s.date = %q{2010-05-27}
   s.description = %q{An easy-to-use client library for the official Dropbox API.}
   s.email = %q{dropbox@timothymorgan.info}
   s.extra_rdoc_files = [
-    "LICENSE",
+    "ChangeLog",
+     "LICENSE",
      "README.rdoc"
   ]
   s.files = [
     ".document",
      ".gitignore",
+     "ChangeLog",
      "LICENSE",
      "README.rdoc",
      "Rakefile",
