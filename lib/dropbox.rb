@@ -32,9 +32,17 @@ module Dropbox
   # The SSL host serving API requests.
   SSL_HOST = "https://api.dropbox.com"
   # Alternate hosts for other API requests.
-  ALTERNATE_HOSTS = { 'event_content' => 'http://api-content.dropbox.com', 'files' => "http://api-content.dropbox.com" }
+  ALTERNATE_HOSTS = {
+    'event_content' => 'http://api-content.dropbox.com',
+    'files' => 'http://api-content.dropbox.com',
+    'thumbnails' => 'http://api-content.dropbox.com'
+  }
   # Alternate SSL hosts for other API requests.
-  ALTERNATE_SSL_HOSTS = { 'event_content' => 'https://api-content.dropbox.com', 'files' => "https://api-content.dropbox.com" }
+  ALTERNATE_SSL_HOSTS = {
+    'event_content' => 'https://api-content.dropbox.com',
+    'files' => 'https://api-content.dropbox.com',
+    'thumbnails' => 'https://api-content.dropbox.com'
+  }
 
   def self.api_url(*paths_and_options) # :nodoc:
     params = paths_and_options.extract_options!

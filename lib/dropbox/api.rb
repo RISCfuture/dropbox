@@ -88,6 +88,53 @@ module Dropbox
       api_body :get, 'files', root(options), *rest
       #TODO streaming, range queries
     end
+    
+    # Downloads a minimized thumbnail for a file. Pass the path to the file,
+    # optionally the size of the thumbnail you want, and any additional options.
+    # See https://www.dropbox.com/developers/docs#thumbnails for a list of valid
+    # size specifiers.
+    #
+    # Returns the content of the thumbnail image as a +String+. The thumbnail
+    # data is in JPEG format. Returns +nil+ if the file does not have a
+    # thumbnail. You can check if a file has a thumbnail using the metadata
+    # method.
+    #
+    # Because of the way this API method works, if you pass in the name of a
+    # file that does not exist, you will not receive a 404, but instead just get
+    # +nil+.
+    #
+    # Options:
+    #
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
+    #
+    # Examples:
+    #
+    # Get the thumbnail for an image (default thunmbnail size):
+    #
+    #  session.thumbnail('my/image.jpg')
+    #
+    # Get the thumbnail for an image in the +medium+ size:
+    #
+    #  session.thumbnail('my/image.jpg', 'medium')
+    
+    def thumbnail(*args)
+      options = args.extract_options!
+      path = args.shift
+      size = args.shift
+      raise ArgumentError, "thumbnail takes a path, an optional size, and optional options" unless path.kind_of?(String) and (size.kind_of?(String) or size.nil?) and args.empty?
+      
+      path.sub! /^\//, ''
+      rest = Dropbox.check_path(path).split('/')
+      rest << { :ssl => @ssl }
+      rest.last[:size] = size if size
+      
+      begin
+        api_body :get, 'thumbnails', root(options), *rest
+      rescue Dropbox::UnsuccessfulResponseError => e
+        raise unless e.response.code.to_i == 404
+        return nil
+      end
+    end
 
     # Uploads a file to a path relative to the configured mode's root. The
     # +remote_path+ parameter is taken to be the path portion _only_; the name

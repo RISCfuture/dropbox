@@ -82,6 +82,12 @@ module Dropbox
       @session.download path, options
     end
     alias :body :download
+    
+    # Delegates to Dropbox::API#thumbnail.
+    
+    def thumbnail(*args)
+      @session.thumbnail path, *args
+    end
 
     # Delegates to Dropbox::API#link.
 

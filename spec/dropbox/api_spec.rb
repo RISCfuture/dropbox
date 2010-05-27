@@ -96,6 +96,63 @@ describe Dropbox::API do
       @session.download(path)
     end
   end
+  
+  describe "#thumbnail" do
+    it "should call the thumbnails API method" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'thumbnails', {}, @response, 'path/to/file', 'sandbox'
+      @session.thumbnail "path/to/file"
+    end
+
+    it "should strip a leading slash" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'thumbnails', {}, @response, 'path/to/file', 'sandbox'
+      @session.thumbnail "/path/to/file"
+    end
+
+    it "should return the body of the response" do
+      @token_mock.stub!(:get).and_return(@response)
+      @session.thumbnail("path/to/file").should eql("response body")
+    end
+
+    it "should check the path" do
+      path = "test/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:get).and_return(@response)
+
+      @session.thumbnail(path)
+    end
+    
+    it "should pass along a size" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'thumbnails', { :size => 'medium' }, @response, 'path/to/file', 'sandbox'
+      @session.thumbnail "path/to/file", 'medium'
+    end
+    
+    it "should raise an error if too many arguments are given" do
+      lambda { @session.thumbnail "path/to/file", 'large', 'oops', :foo => 'bar' }.should raise_error(ArgumentError)
+    end
+    
+    it "should raise an error if invalid arguments are given" do
+      lambda { @session.thumbnail "path/to/file", 'large', :not_string }.should raise_error(ArgumentError)
+      lambda { @session.thumbnail "path/to/file", 'large', 'oops', 'not_hash' }.should raise_error(ArgumentError)
+    end
+    
+    it "should return nil if a 404 is received" do
+      request_mock = mock('Request')
+      response_mock = mock('Response', :code => '404')
+      error = Dropbox::UnsuccessfulResponseError.new(request_mock, response_mock)
+      @token_mock.stub!(:get).and_raise(error)
+      
+      @session.thumbnail('foo').should be_nil
+    end
+    
+    it "should raise any other response codes" do
+      request_mock = mock('Request')
+      response_mock = mock('Response', :code => '500')
+      error = Dropbox::UnsuccessfulResponseError.new(request_mock, response_mock)
+      @token_mock.stub!(:get).and_raise(error)
+      
+      lambda { @session.thumbnail('foo') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+  end
 
   describe "#copy" do
     before :each do

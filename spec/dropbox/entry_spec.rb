@@ -125,6 +125,36 @@ describe Dropbox::Entry do
       @entry.download(:sandbox => true)
     end
   end
+  
+  describe "#thumbnail" do
+    it "should delegate to the session and return the result" do
+      result = mock('result')
+      @session.should_receive(:thumbnail).once.with(@path).and_return(result)
+
+      @entry.thumbnail.should eql(result)
+    end
+    
+    it "should pass along a size" do
+      result = mock('result')
+      @session.should_receive(:thumbnail).once.with(@path, 'medium').and_return(result)
+
+      @entry.thumbnail('medium').should eql(result)
+    end
+
+    it "should pass along options" do
+      result = mock('result')
+      @session.should_receive(:thumbnail).once.with(@path, { :sandbox => true }).and_return(result)
+
+      @entry.thumbnail(:sandbox => true).should eql(result)
+    end
+    
+    it "should pass along a size and options" do
+      result = mock('result')
+      @session.should_receive(:thumbnail).once.with(@path, 'medium', { :sandbox => true }).and_return(result)
+
+      @entry.thumbnail('medium', :sandbox => true).should eql(result)
+    end
+  end
 
   describe "#link" do
     it "should delegate to the session and return the result" do
