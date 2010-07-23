@@ -120,7 +120,17 @@ describe Dropbox::Session do
       @token_mock.stub!(:token).and_return("request token")
       @token_mock.stub!(:secret).and_return("request token secret")
 
-      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret" ].to_yaml)
+      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false ].to_yaml)
+    end
+    
+    it "should serialize the SSL setting" do
+      @session = Dropbox::Session.new('foo', 'bar', :ssl => true)
+      @consumer_mock.stub!(:key).and_return("consumer key")
+      @consumer_mock.stub!(:secret).and_return("consumer secret")
+      @token_mock.stub!(:token).and_return("request token")
+      @token_mock.stub!(:secret).and_return("request token secret")
+
+      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", true ].to_yaml)
     end
 
     it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
@@ -135,10 +145,17 @@ describe Dropbox::Session do
 
     it "should return a properly initialized unauthorized instance" do
       mock_session = mock('Dropbox::Session')
-      Dropbox::Session.should_receive(:new).once.with('key', 'secret').and_return(mock_session)
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true).and_return(mock_session)
+      
+      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true ].to_yaml).should eql(mock_session)
+      #TODO request token remains opaque for purposes of testing
+    end
+    
+    it "should allow the SSL option to be left out" do
+      mock_session = mock('Dropbox::Session')
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil).and_return(mock_session)
       
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(mock_session)
-      #TODO request token remains opaque for purposes of testing
     end
 
     it "should return a properly initialized authorized instance" do

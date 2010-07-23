@@ -106,9 +106,9 @@ module Dropbox
 
     def serialize
       if authorized? then
-        [ @consumer.key, @consumer.secret, authorized?, @access_token.token, @access_token.secret ].to_yaml
+        [ @consumer.key, @consumer.secret, authorized?, @access_token.token, @access_token.secret, @ssl ].to_yaml
       else
-        [ @consumer.key, @consumer.secret, authorized?, @request_token.token, @request_token.secret ].to_yaml
+        [ @consumer.key, @consumer.secret, authorized?, @request_token.token, @request_token.secret, @ssl ].to_yaml
       end
     end
     
@@ -116,10 +116,10 @@ module Dropbox
     # Returns the recreated instance.
 
     def self.deserialize(data)
-      consumer_key, consumer_secret, authorized, token, token_secret = YAML.load(StringIO.new(data))
+      consumer_key, consumer_secret, authorized, token, token_secret, ssl = YAML.load(StringIO.new(data))
       raise ArgumentError, "Must provide a properly serialized #{self.to_s} instance" unless [ consumer_key, consumer_secret, token, token_secret ].all? and authorized == true or authorized == false
 
-      session = self.new(consumer_key, consumer_secret)
+      session = self.new(consumer_key, consumer_secret, :ssl => ssl)
       if authorized then
         session.instance_variable_set :@access_token, OAuth::AccessToken.new(session.instance_variable_get(:@consumer), token, token_secret)
       else
