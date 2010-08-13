@@ -554,6 +554,11 @@ describe Dropbox::API do
           UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
           @session.upload @file, 'remote/'
         end
+
+        it "should accept a custom file name via the :as parameter" do
+          UploadIO.should_receive(:convert!).once.with(@file, anything, 'myfile.txt', __FILE__)
+          @session.upload @file, 'remote/', :as => 'myfile.txt'
+        end
       end
 
       describe "given a String object" do
@@ -566,6 +571,11 @@ describe Dropbox::API do
         it "should use the file at that path as the stream" do
           UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
           @session.upload @string, 'remote/'
+        end
+
+        it "should accept a custom file name via the :as parameter" do
+          UploadIO.should_receive(:convert!).once.with(@file, anything, 'myfile.txt', __FILE__)
+          @session.upload @string, 'remote/', :as => 'myfile.txt'
         end
       end
 
