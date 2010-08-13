@@ -147,10 +147,12 @@ module Dropbox
     # Options:
     #
     # +mode+:: Temporarily changes the API mode. See the MODES array.
+    # +as+:: Specify a custom name for the uploaded file.
     #
     # Examples:
     #
     #  session.upload 'music.pdf', '/' # upload a file by path to the root directory
+    #  session.upload 'music.pdf', '/', :as => 'music_upload.pdf' # upload a file by path to the root directory with a custom name
     #  session.upload 'music.pdf, 'music/' # upload a file by path to the music folder
     #  session.upload File.new('music.pdf'), '/' # same as the first example
 
@@ -166,6 +168,8 @@ module Dropbox
       else
         raise ArgumentError, "local_file must be a File or file path"
       end
+      
+      name = options.delete(:as).to_s if options[:as]
 
       remote_path = remote_path.sub(/^\//, '')
       remote_path = Dropbox.check_path(remote_path).split('/')
