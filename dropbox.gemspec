@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Morgan"]
-  s.date = %q{2010-05-27}
+  s.date = %q{2010-09-03}
   s.description = %q{An easy-to-use client library for the official Dropbox API.}
   s.email = %q{dropbox@timothymorgan.info}
   s.extra_rdoc_files = [
@@ -30,15 +30,15 @@ Gem::Specification.new do |s|
      "lib/dropbox/api.rb",
      "lib/dropbox/entry.rb",
      "lib/dropbox/event.rb",
+     "lib/dropbox/extensions/array.rb",
+     "lib/dropbox/extensions/hash.rb",
+     "lib/dropbox/extensions/module.rb",
+     "lib/dropbox/extensions/object.rb",
+     "lib/dropbox/extensions/string.rb",
+     "lib/dropbox/extensions/to_bool.rb",
      "lib/dropbox/memoization.rb",
      "lib/dropbox/revision.rb",
      "lib/dropbox/session.rb",
-     "lib/extensions/array.rb",
-     "lib/extensions/hash.rb",
-     "lib/extensions/module.rb",
-     "lib/extensions/object.rb",
-     "lib/extensions/string.rb",
-     "lib/extensions/to_bool.rb",
      "spec/dropbox/api_spec.rb",
      "spec/dropbox/entry_spec.rb",
      "spec/dropbox/event_spec.rb",
