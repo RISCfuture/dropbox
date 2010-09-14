@@ -7,6 +7,7 @@ describe Dropbox::Session do
       secret = 'test_secret'
       options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
       options_hash[:site] = Dropbox::HOST
+      options_hash[:proxy] = nil
 
       consumer_mock = mock('OAuth::Consumer')
       consumer_mock.stub!(:get_request_token)
@@ -20,12 +21,27 @@ describe Dropbox::Session do
       secret = 'test_secret'
       options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
       options_hash[:site] = Dropbox::SSL_HOST
+      options_hash[:proxy] = nil
 
       consumer_mock = mock('OAuth::Consumer')
       consumer_mock.stub!(:get_request_token)
       OAuth::Consumer.should_receive(:new).once.with(key, secret, options_hash).and_return(consumer_mock)
 
       Dropbox::Session.new(key, secret, :ssl => true)
+    end
+    
+    it "should create a new OAuth::Consumer" do
+      key = 'test_key'
+      secret = 'test_secret'
+      options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
+      options_hash[:site] = Dropbox::HOST
+      options_hash[:proxy] = proxy = mock('proxy')
+
+      consumer_mock = mock('OAuth::Consumer')
+      consumer_mock.stub!(:get_request_token)
+      OAuth::Consumer.should_receive(:new).once.with(key, secret, options_hash).and_return(consumer_mock)
+
+      Dropbox::Session.new(key, secret, :proxy => proxy)
     end
 
     it "should get the request token" do
