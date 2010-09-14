@@ -22,7 +22,7 @@ class Hash # :nodoc:
     hsh.each { |k, v| hsh[k] = v.symbolize_keys_recursively if v.kind_of?(Hash) }
     hsh.each { |k, v| hsh[k] = v.map { |i| i.kind_of?(Hash) ? i.symbolize_keys_recursively : i } if v.kind_of?(Array) }
     return hsh
-  end
+  end unless method_defined?(:symbolize_keys_recursively)
 
   def stringify_keys # :nodoc:
     inject({}) do |options, (key, value)|
@@ -40,7 +40,7 @@ class Hash # :nodoc:
     hsh.each { |k, v| hsh[k] = v.stringify_keys_recursively if v.kind_of?(Hash) }
     hsh.each { |k, v| hsh[k] = v.map { |i| i.kind_of?(Hash) ? i.stringify_keys_recursively : i } if v.kind_of?(Array) }
     return hsh
-  end
+  end unless method_defined?(:stringify_keys_recursively)
 
   def to_struct # :nodoc:
     struct = Struct.new(*keys).new(*values)
@@ -50,12 +50,12 @@ class Hash # :nodoc:
       struct.eigenclass.send(:define_method, key.to_sym) { return val }
     end
     return struct
-  end
+  end unless method_defined?(:to_struct)
 
   def to_struct_recursively # :nodoc:
     hsh = dup
     hsh.each { |k, v| hsh[k] = v.to_struct_recursively if v.kind_of?(Hash) }
     hsh.each { |k, v| hsh[k] = v.map { |i| i.kind_of?(Hash) ? i.to_struct_recursively : i } if v.kind_of?(Array) }
     return hsh.to_struct
-  end
+  end unless method_defined?(:to_struct_recursively)
 end
