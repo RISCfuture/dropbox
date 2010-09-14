@@ -73,6 +73,11 @@ account, and then upload a file to their Dropbox.
 * If you're using pingbacks, check out Dropbox::Event and Dropbox::Revision.
   Those classes parse pingbacks from Dropbox into Ruby objects.
 
+== Testing Your Code
+
+fguillen has implemented a mock of the Dropbox API server:
+http://github.com/fguillen/DummyDropbox
+
 == Note on Patches/Pull Requests
  
 * Fork the project.
