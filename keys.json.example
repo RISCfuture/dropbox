@@ -1,4 +1,6 @@
 {
-key:    "abc123456789012",
-secret: "abc123456789012"
+  "key": "abc123456789012",
+  "secret": "abc123456789012",
+  "email": "my@email.com",
+  "password": "mypassword123"
 }

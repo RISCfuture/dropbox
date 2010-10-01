@@ -7,8 +7,17 @@ require 'spec/autorun'
 
 module ExternalKeysFileHelper
   def read_keys_file
+    unless File.exist?('keys.json')
+      raise "Please add a keys.json file to the project directory containing your Dropbox API key and secret. See keys.json.example to get started."
+    end
+    
     keys_file_contents = open("keys.json", "r").read()
-    JSON.parse(keys_file_contents)
+    data = JSON.parse(keys_file_contents)
+    unless %w( key secret email password ).all? { |key| data.include? key }
+      raise "Your keys.json file does contain all the required information. See keys.json.example for more help."
+    end
+    
+    data
   end
 end
 

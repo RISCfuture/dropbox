@@ -175,7 +175,7 @@ describe Dropbox::Session do
     end
 
     def new_session
-      Dropbox::Session.new(@keys['key'], @keys['secret'], :authorizing_user => @keys['testing_user'], :authorizing_password => @keys['testing_password'])
+      Dropbox::Session.new(@keys['key'], @keys['secret'], :authorizing_user => @keys['email'], :authorizing_password => @keys['password'])
     end
 
     describe "#authorized?" do
