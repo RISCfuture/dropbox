@@ -5,6 +5,13 @@ require 'dropbox.rb'
 require 'spec'
 require 'spec/autorun'
 
+module ExternalKeysFileHelper
+  def read_keys_file
+    keys_file_contents = open("keys.json", "r").read()
+    JSON.parse(keys_file_contents)
+  end
+end
+
 Spec::Runner.configure do |config|
-  
+  config.include(ExternalKeysFileHelper)
 end

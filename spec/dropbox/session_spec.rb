@@ -1,6 +1,10 @@
 require File.expand_path(File.dirname(__FILE__) + '/../spec_helper')
 
 describe Dropbox::Session do
+  before(:all) do
+    @keys = read_keys_file
+  end
+
   describe ".new" do
     it "should create a new OAuth::Consumer" do
       key = 'test_key'
@@ -15,7 +19,7 @@ describe Dropbox::Session do
 
       Dropbox::Session.new(key, secret)
     end
-    
+
     it "should use the SSL host if :ssl => true is given" do
       key = 'test_key'
       secret = 'test_secret'
@@ -29,7 +33,7 @@ describe Dropbox::Session do
 
       Dropbox::Session.new(key, secret, :ssl => true)
     end
-    
+
     it "should create a new OAuth::Consumer" do
       key = 'test_key'
       secret = 'test_secret'
@@ -138,7 +142,7 @@ describe Dropbox::Session do
 
       @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false ].to_yaml)
     end
-    
+
     it "should serialize the SSL setting" do
       @session = Dropbox::Session.new('foo', 'bar', :ssl => true)
       @consumer_mock.stub!(:key).and_return("consumer key")
@@ -162,15 +166,15 @@ describe Dropbox::Session do
     it "should return a properly initialized unauthorized instance" do
       mock_session = mock('Dropbox::Session')
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true).and_return(mock_session)
-      
+
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true ].to_yaml).should eql(mock_session)
       #TODO request token remains opaque for purposes of testing
     end
-    
+
     it "should allow the SSL option to be left out" do
       mock_session = mock('Dropbox::Session')
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil).and_return(mock_session)
-      
+
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(mock_session)
     end
 
