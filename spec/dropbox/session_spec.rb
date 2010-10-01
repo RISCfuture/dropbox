@@ -174,9 +174,13 @@ describe Dropbox::Session do
       @keys = read_keys_file
     end
 
+    def new_session
+      Dropbox::Session.new(@keys['key'], @keys['secret'], :authorizing_user => @keys['testing_user'], :authorizing_password => @keys['testing_password'])
+    end
+
     describe "#authorized?" do
       before(:each) do
-        @session = Dropbox::Session.new(@keys['key'], @keys['secret'])
+        @session = new_session
       end
 
       it "should be false for sessions that have not been authorized" do
@@ -184,32 +188,39 @@ describe Dropbox::Session do
       end
 
       it "should be true for sessions that have been authorized" do
-        @session.authorize!(@keys['testing_user'], @keys['testing_password'])
+        @session.authorize!
         @session.should be_authorized
       end
     end
 
     describe "#authorize!" do
-      before(:each) do
-        @session = Dropbox::Session.new(@keys['key'], @keys['secret'])
-      end
+      describe "with credentials" do
+        before(:each) do
+          @session = new_session
+        end
 
-      describe "with correct credentials" do
         it "should not fail" do
-          lambda { @session.authorize!(@keys['testing_user'], @keys['testing_password']) }.should_not raise_error
+          lambda { @session.authorize! }.should_not raise_error
         end
 
         it "should return the result of #authorize" do
           @session.should_receive(:authorize).and_return("winner!")
-          @session.authorize!(@keys['testing_user'], @keys['testing_password']).should == "winner!"
+          @session.authorize!.should == "winner!"
+        end
+      end
+
+      describe "with no credentials" do
+        it "should fail" do
+          @session = Dropbox::Session.new(@keys['key'], @keys['password'])
+          lambda { @session.authorize! }.should raise_error
         end
       end
     end
 
     describe ".deserialize" do
       it "should return a properly initialized authorized instance" do
-        @session = Dropbox::Session.new(@keys['key'], @keys['secret'])
-        @session.authorize!(@keys['testing_user'], @keys['testing_password']).should be_true
+        @session = new_session
+        @session.authorize!.should be_true
         @session_clone = Dropbox::Session.deserialize(@session.serialize)
 
         @session.serialize.should == @session_clone.serialize
@@ -218,8 +229,8 @@ describe Dropbox::Session do
 
     describe "#serialize" do
       it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
-        @session = Dropbox::Session.new(@keys['key'], @keys['secret'])
-        @session.authorize!(@keys['testing_user'], @keys['testing_password']).should be_true
+        @session = new_session
+        @session.authorize!.should be_true
         @session.serialize.should eql([ @keys['key'], @keys['secret'], true, @session.send(:access_token).token, @session.send(:access_token).secret, false ].to_yaml)
       end
     end

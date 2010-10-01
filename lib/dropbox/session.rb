@@ -59,6 +59,11 @@ module Dropbox
 
     def initialize(oauth_key, oauth_secret, options={})
       @ssl = options[:ssl].to_bool
+
+      # necessary for the automatic authorization in #authorize!
+      @authorizing_user = options[:authorizing_user] if options[:authorizing_user]
+      @authorizing_password = options[:authorizing_password] if options[:authorizing_password]
+
       @proxy = options[:proxy] || ENV["HTTP_PROXY"] || ENV["http_proxy"]
       @proxy = nil if options[:noproxy].to_bool
       @consumer = OAuth::Consumer.new(oauth_key, oauth_secret,
@@ -107,14 +112,14 @@ module Dropbox
 
     # automatically complete step 2 of the authentication process. raise error on failure.
     # code lifted directly from the official Ruby API on the Dropbox developers page.
-    def authorize!(user, password)
+    def authorize!
       begin
         a = Mechanize.new
         a.get(authorize_url) do |page|
             login_form = page.form_with(:action => '/login')
 
-            login_form.login_email  = user
-            login_form.login_password = password
+            login_form.login_email  = @authorizing_user
+            login_form.login_password = @authorizing_password
             auth_page = login_form.submit()
 
             auth_form = auth_page.form_with(:action => 'authorize')
