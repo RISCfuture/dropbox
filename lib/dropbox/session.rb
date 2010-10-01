@@ -1,6 +1,7 @@
 # Defines the Dropbox::Session class.
 
 require 'oauth'
+require 'mechanize'
 
 module Dropbox
 
@@ -104,6 +105,30 @@ module Dropbox
       @access_token.to_bool
     end
 
+    # automatically complete step 2 of the authentication process. raise error on failure.
+    # code lifted directly from the official Ruby API on the Dropbox developers page.
+    def authorize!(user, password)
+      begin
+        a = Mechanize.new
+        a.get(authorize_url) do |page|
+            login_form = page.form_with(:action => '/login')
+
+            login_form.login_email  = user
+            login_form.login_password = password
+            auth_page = login_form.submit()
+
+            auth_form = auth_page.form_with(:action => 'authorize')
+            if auth_form
+                auth_button = auth_form.button_with(:value => "Allow")
+                auth_form.click_button
+            end
+        end
+      rescue OAuth::Unauthorized => e
+        raise Dropbox::UnauthorizedError
+      end
+      authorize
+    end
+
     # Serializes this object into a string that can then be recreated with the
     # Dropbox::Session.deserialize method.
 
@@ -114,7 +139,7 @@ module Dropbox
         [ @consumer.key, @consumer.secret, authorized?, @request_token.token, @request_token.secret, @ssl ].to_yaml
       end
     end
-    
+
     # Deserializes an instance from a string created from the serialize method.
     # Returns the recreated instance.
 
@@ -128,7 +153,7 @@ module Dropbox
       else
         session.instance_variable_set :@request_token, OAuth::RequestToken.new(session.instance_variable_get(:@consumer), token, token_secret)
       end
-      
+
       return session
     end
 

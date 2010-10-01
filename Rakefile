@@ -17,6 +17,7 @@ begin
     gem.add_runtime_dependency "oauth", ">= 0.3.6"
     gem.add_runtime_dependency "json", ">= 1.2.0"
     gem.add_runtime_dependency "multipart-post", ">= 1.0"
+    gem.add_runtime_dependency "mechanize", ">= 1.0.0"
   end
   Jeweler::GemcutterTasks.new
   Jeweler::RubyforgeTasks.new
