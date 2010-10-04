@@ -582,6 +582,22 @@ describe Dropbox::API do
       it "should raise an error if given an unknown argument type" do
         lambda { @session.upload 123, 'path' }.should raise_error(ArgumentError)
       end
+
+      describe "given a StringIO object and a filename" do
+        before :each do
+          @string_io = StringIO.new("test123")
+          @filename = "test.txt"
+        end
+
+        it "should use the StringIO as the stream and take filename from the options" do
+          UploadIO.should_receive(:convert!).once.with(@string_io, anything, @filename, @filename)
+          @session.upload @string_io, 'remote/', :as => @filename
+        end
+
+        it "should raise an exception if the :as option is not specified" do
+          lambda { @session.upload @string_io, 'remote/' }.should raise_error(ArgumentError)
+        end
+      end
     end
 
     describe "request" do
