@@ -1,3 +1,15 @@
+1.1.2 (2010-10-6)
+
+* Added ability to perform OAuth authorization on behalf of the user.
+* Specs now test authorization against actual Dropbox API server.
+
+1.1.1 (2010-09-22)
+
+* http-proxy support added.
+* Session now persists SSL attribute.
+* Core extensions moved to a namespaced path to prevent conflicts.
+* Minor bug fixes.
+
 1.1.0 (2010-05-27)
 
 * Added thumbnails API method.
