@@ -82,7 +82,7 @@ module Dropbox
     # +mode+:: Temporarily changes the API mode. See the MODES array.
 
     def download(path, options={})
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       rest = Dropbox.check_path(path).split('/')
       rest << { :ssl => @ssl }
       api_body :get, 'files', root(options), *rest
@@ -123,7 +123,7 @@ module Dropbox
       size = args.shift
       raise ArgumentError, "thumbnail takes a path, an optional size, and optional options" unless path.kind_of?(String) and (size.kind_of?(String) or size.nil?) and args.empty?
       
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       rest = Dropbox.check_path(path).split('/')
       rest << { :ssl => @ssl }
       rest.last[:size] = size if size
@@ -167,7 +167,7 @@ module Dropbox
         raise ArgumentError, "local_file must be a File or file path"
       end
 
-      remote_path.sub! /^\//, ''
+      remote_path = remote_path.sub(/^\//, '')
       remote_path = Dropbox.check_path(remote_path).split('/')
 
       remote_path << { :ssl => @ssl }
@@ -217,8 +217,8 @@ module Dropbox
     # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
     def copy(source, target, options={})
-      source.sub! /^\//, ''
-      target.sub! /^\//, ''
+      source = source.sub(/^\//, '')
+      target = target.sub(/^\//, '')
       target << File.basename(source) if target.ends_with?('/')
       begin
         parse_metadata(post('fileops', 'copy', :from_path => Dropbox.check_path(source), :to_path => Dropbox.check_path(target), :root => root(options), :ssl => @ssl)).to_struct_recursively
@@ -243,7 +243,7 @@ module Dropbox
     # TODO The API documentation says this method returns 403 if the path already exists, but it actually appends " (1)" to the end of the name and returns 200.
 
     def create_folder(path, options={})
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       path.sub! /\/$/, ''
       begin
         parse_metadata(post('fileops', 'create_folder', :path => Dropbox.check_path(path), :root => root(options), :ssl => @ssl)).to_struct_recursively
@@ -266,7 +266,7 @@ module Dropbox
     # TODO The API documentation says this method returns 404 if the path does not exist, but it actually returns 5xx.
     
     def delete(path, options={})
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       path.sub! /\/$/, ''
       begin
         api_response(:post, 'fileops', 'delete', :path => Dropbox.check_path(path), :root => root(options), :ssl => @ssl)
@@ -296,8 +296,8 @@ module Dropbox
     # TODO The API documentation says this method returns 404/403 if the source or target is invalid, but it actually returns 5xx.
 
     def move(source, target, options={})
-      source.sub! /^\//, ''
-      target.sub! /^\//, ''
+      source = source.sub(/^\//, '')
+      target = target.sub(/^\//, '')
       target << File.basename(source) if target.ends_with?('/')
       begin
         parse_metadata(post('fileops', 'move', :from_path => Dropbox.check_path(source), :to_path => Dropbox.check_path(target), :root => root(options), :ssl => @ssl)).to_struct_recursively
@@ -322,7 +322,7 @@ module Dropbox
 
     def rename(path, new_name, options={})
       raise ArgumentError, "Names cannot have slashes in them" if new_name.include?('/')
-      path.sub! /\/$/, ''
+      path = path.sub(/\/$/, '')
       destination = path.split('/')
       destination[destination.size - 1] = new_name
       destination = destination.join('/')
@@ -339,7 +339,7 @@ module Dropbox
     # +mode+:: Temporarily changes the API mode. See the MODES array.
 
     def link(path, options={})
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       begin
         rest = Dropbox.check_path(path).split('/')
         rest << { :ssl => @ssl }
@@ -377,7 +377,7 @@ module Dropbox
     # TODO hash option seems to return HTTPBadRequest for now
 
     def metadata(path, options={})
-      path.sub! /^\//, ''
+      path = path.sub(/^\//, '')
       args = [
               'metadata',
               root(options)

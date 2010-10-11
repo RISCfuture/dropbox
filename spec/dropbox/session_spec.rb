@@ -7,6 +7,7 @@ describe Dropbox::Session do
       secret = 'test_secret'
       options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
       options_hash[:site] = Dropbox::HOST
+      options_hash[:proxy] = nil
 
       consumer_mock = mock('OAuth::Consumer')
       consumer_mock.stub!(:get_request_token)
@@ -14,18 +15,33 @@ describe Dropbox::Session do
 
       Dropbox::Session.new(key, secret)
     end
-    
+
     it "should use the SSL host if :ssl => true is given" do
       key = 'test_key'
       secret = 'test_secret'
       options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
       options_hash[:site] = Dropbox::SSL_HOST
+      options_hash[:proxy] = nil
 
       consumer_mock = mock('OAuth::Consumer')
       consumer_mock.stub!(:get_request_token)
       OAuth::Consumer.should_receive(:new).once.with(key, secret, options_hash).and_return(consumer_mock)
 
       Dropbox::Session.new(key, secret, :ssl => true)
+    end
+
+    it "should create a new OAuth::Consumer" do
+      key = 'test_key'
+      secret = 'test_secret'
+      options_hash = [ 'request_token', 'authorize', 'access_token' ].inject({}) { |hsh, cur| hsh["#{cur}_path".to_sym] = "/#{Dropbox::VERSION}/oauth/#{cur}" ; hsh }
+      options_hash[:site] = Dropbox::HOST
+      options_hash[:proxy] = proxy = mock('proxy')
+
+      consumer_mock = mock('OAuth::Consumer')
+      consumer_mock.stub!(:get_request_token)
+      OAuth::Consumer.should_receive(:new).once.with(key, secret, options_hash).and_return(consumer_mock)
+
+      Dropbox::Session.new(key, secret, :proxy => proxy)
     end
 
     it "should get the request token" do
@@ -101,10 +117,6 @@ describe Dropbox::Session do
     end
   end
 
-  describe "#authorized?" do
-    #TODO this method remains opaque for purposes of testing
-  end
-
   describe "#serialize" do
     before :each do
       @consumer_mock = mock("OAuth::Consumer")
@@ -122,7 +134,7 @@ describe Dropbox::Session do
 
       @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false ].to_yaml)
     end
-    
+
     it "should serialize the SSL setting" do
       @session = Dropbox::Session.new('foo', 'bar', :ssl => true)
       @consumer_mock.stub!(:key).and_return("consumer key")
@@ -132,34 +144,95 @@ describe Dropbox::Session do
 
       @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", true ].to_yaml)
     end
-
-    it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
-      pending "access token is opaque"
-    end
   end
 
   describe ".deserialize" do
+    before :each do
+      @mock_session = mock('Dropbox::Session')
+    end
+
     it "should raise an error if an improper YAML is provided" do
       lambda { Dropbox::Session.deserialize([ 1, 2, 3].to_yaml) }.should raise_error(ArgumentError)
     end
 
     it "should return a properly initialized unauthorized instance" do
-      mock_session = mock('Dropbox::Session')
-      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true).and_return(mock_session)
-      
-      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true ].to_yaml).should eql(mock_session)
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true).and_return(@mock_session)
+
+      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true ].to_yaml).should eql(@mock_session)
       #TODO request token remains opaque for purposes of testing
     end
-    
+
     it "should allow the SSL option to be left out" do
-      mock_session = mock('Dropbox::Session')
-      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil).and_return(mock_session)
-      
-      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(mock_session)
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil).and_return(@mock_session)
+
+      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(@mock_session)
+    end
+  end
+
+  describe "with Dropbox keys " do
+    before(:all) do
+      @keys = read_keys_file
     end
 
-    it "should return a properly initialized authorized instance" do
-      pending "access token remains opaque for purposes of testing"
+    def new_session
+      Dropbox::Session.new(@keys['key'], @keys['secret'], :authorizing_user => @keys['email'], :authorizing_password => @keys['password'])
+    end
+
+    describe "#authorized?" do
+      before(:each) do
+        @session = new_session
+      end
+
+      it "should be false for sessions that have not been authorized" do
+        @session.should_not be_authorized
+      end
+
+      it "should be true for sessions that have been authorized" do
+        @session.authorize!
+        @session.should be_authorized
+      end
+    end
+
+    describe "#authorize!" do
+      describe "with credentials" do
+        before(:each) do
+          @session = new_session
+        end
+
+        it "should not fail" do
+          lambda { @session.authorize! }.should_not raise_error
+        end
+
+        it "should return the result of #authorize" do
+          @session.should_receive(:authorize).and_return("winner!")
+          @session.authorize!.should == "winner!"
+        end
+      end
+
+      describe "with no credentials" do
+        it "should fail" do
+          @session = Dropbox::Session.new(@keys['key'], @keys['password'])
+          lambda { @session.authorize! }.should raise_error
+        end
+      end
+    end
+
+    describe ".deserialize" do
+      it "should return a properly initialized authorized instance" do
+        @session = new_session
+        @session.authorize!.should be_true
+        @session_clone = Dropbox::Session.deserialize(@session.serialize)
+
+        @session.serialize.should == @session_clone.serialize
+      end
+    end
+
+    describe "#serialize" do
+      it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
+        @session = new_session
+        @session.authorize!.should be_true
+        @session.serialize.should eql([ @keys['key'], @keys['secret'], true, @session.send(:access_token).token, @session.send(:access_token).secret, false ].to_yaml)
+      end
     end
   end
 end

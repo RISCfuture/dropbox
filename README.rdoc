@@ -73,6 +73,16 @@ account, and then upload a file to their Dropbox.
 * If you're using pingbacks, check out Dropbox::Event and Dropbox::Revision.
   Those classes parse pingbacks from Dropbox into Ruby objects.
 
+== Testing Your Code
+
+The gem is fully specced. Run specs with +rake spec+. Before doing so, you will
+need to create a file called +keys.json+ in the project root containing your
+Dropbox API key and secret, as well as the email and password for a Dropbox
+account. See the +keys.json.example+ file to get started.
+
+fguillen has implemented a mock of the Dropbox API server:
+http://github.com/fguillen/DummyDropbox
+
 == Note on Patches/Pull Requests
  
 * Fork the project.

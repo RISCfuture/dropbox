@@ -1,6 +1,7 @@
 # Defines the Dropbox::Session class.
 
 require 'oauth'
+require 'mechanize'
 
 module Dropbox
 
@@ -47,6 +48,11 @@ module Dropbox
 
   class Session
     include API
+    
+    # The email of a Dropbox account to automatically authorize.
+    attr_accessor :authorizing_user
+    # The password of a Dropbox account to automatically authorize.
+    attr_accessor :authorizing_password
 
     # Begins the authorization process. Provide the OAuth key and secret of your
     # API account, assigned by Dropbox. This is the first step in the
@@ -55,11 +61,23 @@ module Dropbox
     # Options:
     #
     # +ssl+:: If true, uses SSL to connect to the Dropbox API server.
+    # +authorizing_user+:: The email of a Dropbox account to automatically
+    #                      authorize.
+    # +authorizing_password+:: The password of a Dropbox account to
+    #                          automatically authorize.
 
     def initialize(oauth_key, oauth_secret, options={})
       @ssl = options[:ssl].to_bool
+
+      # necessary for the automatic authorization in #authorize!
+      @authorizing_user = options[:authorizing_user] if options[:authorizing_user]
+      @authorizing_password = options[:authorizing_password] if options[:authorizing_password]
+
+      @proxy = options[:proxy] || ENV["HTTP_PROXY"] || ENV["http_proxy"]
+      @proxy = nil if options[:noproxy].to_bool
       @consumer = OAuth::Consumer.new(oauth_key, oauth_secret,
                                       :site => (@ssl ? Dropbox::SSL_HOST : Dropbox::HOST),
+                                      :proxy => @proxy,
                                       :request_token_path => "/#{Dropbox::VERSION}/oauth/request_token",
                                       :authorize_path => "/#{Dropbox::VERSION}/oauth/authorize",
                                       :access_token_path => "/#{Dropbox::VERSION}/oauth/access_token")
@@ -100,6 +118,32 @@ module Dropbox
     def authorized?
       @access_token.to_bool
     end
+    
+    # Automatically complete the authorization step of the OAuth process. You
+    # must have provided the +authorizing_user+ and +authorizing_password+
+    # options. Raises a Dropbox::UnauthorizedError on failure.
+    
+    def authorize!
+      begin
+        a = Mechanize.new
+        a.get(authorize_url) do |page|
+          login_form = page.form_with(:action => '/login')
+
+          login_form.login_email  = @authorizing_user
+          login_form.login_password = @authorizing_password
+          auth_page = login_form.submit()
+
+          auth_form = auth_page.form_with(:action => 'authorize')
+          if auth_form
+            auth_button = auth_form.button_with(:value => "Allow")
+            auth_form.click_button
+          end
+        end
+      rescue OAuth::Unauthorized => e
+        raise Dropbox::UnauthorizedError
+      end
+      authorize
+    end
 
     # Serializes this object into a string that can then be recreated with the
     # Dropbox::Session.deserialize method.
@@ -111,7 +155,7 @@ module Dropbox
         [ @consumer.key, @consumer.secret, authorized?, @request_token.token, @request_token.secret, @ssl ].to_yaml
       end
     end
-    
+
     # Deserializes an instance from a string created from the serialize method.
     # Returns the recreated instance.
 
@@ -125,7 +169,7 @@ module Dropbox
       else
         session.instance_variable_set :@request_token, OAuth::RequestToken.new(session.instance_variable_get(:@consumer), token, token_secret)
       end
-      
+
       return session
     end
 
