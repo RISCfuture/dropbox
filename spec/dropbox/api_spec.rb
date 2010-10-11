@@ -30,7 +30,8 @@ def stub_for_upload_testing
   @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(true)
   @response.stub!(:body).and_return('{"test":"val"}')
 
-  Net::HTTP.stub!(:start).and_return(@response)
+  @http = mock('Net::HTTP', :request => @response)
+  Net::HTTP.stub!(:new).and_return(@http)
 end
 
 def response_acts_as(subclass)
@@ -621,7 +622,8 @@ describe Dropbox::API do
 
       it "should send the request" do
         uri = URI.parse(Dropbox::ALTERNATE_HOSTS['files'])
-        Net::HTTP.should_receive(:start).once.with(uri.host, uri.port).and_return(@response)
+        @http = mock('Net::HTTP', :request => @response)
+        Net::HTTP.stub!(:new).and_return(@http)
 
         @session.upload __FILE__, 'test'
       end
@@ -631,7 +633,8 @@ describe Dropbox::API do
         @session.authorize
         
         uri = URI.parse(Dropbox::ALTERNATE_SSL_HOSTS['files'])
-        Net::HTTP.should_receive(:start).once.with(uri.host, uri.port).and_return(@response)
+        @http = mock('Net::HTTP', :request => @response)
+        Net::HTTP.stub!(:new).and_return(@http)
 
         @session.upload __FILE__, 'test'
       end
