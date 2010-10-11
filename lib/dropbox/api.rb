@@ -189,7 +189,8 @@ module Dropbox
                                                        local_path))
       request['authorization'] = oauth_signature.join(', ')
       
-      response = Net::HTTP.start(uri.host, uri.port) { |http| http.request(request) }
+      response = Net::HTTP.new(uri.host, uri.port).request(request)
+
       if response.kind_of?(Net::HTTPSuccess) then
         begin
           return JSON.parse(response.body).symbolize_keys_recursively.to_struct_recursively
