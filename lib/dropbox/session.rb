@@ -185,7 +185,7 @@ module Dropbox
 
     def clone_with_host(host)
       session = dup
-      consumer = OAuth::Consumer.new(@consumer.key, @consumer.secret, :site => host)
+      consumer = OAuth::Consumer.new(@consumer.key, @consumer.secret, :site => host, :proxy => @proxy)
       session.instance_variable_set :@consumer, consumer
       session.instance_variable_set :@access_token, OAuth::AccessToken.new(consumer, @access_token.token, @access_token.secret)
       return session
