@@ -189,7 +189,7 @@ module Dropbox
                                                        local_path))
       request['authorization'] = oauth_signature.join(', ')
      
-      proxy = URI.parse(@proxy) 
+      proxy = URI.parse(@proxy || "") 
       response = Net::HTTP::Proxy(proxy.host, proxy.port).start(uri.host, uri.port) { |http| http.request(request) }
       if response.kind_of?(Net::HTTPSuccess) then
         begin
