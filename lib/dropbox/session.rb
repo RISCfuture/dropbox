@@ -145,6 +145,12 @@ module Dropbox
       authorize
     end
 
+    # Returns the OAuth access_token which allows access to token and secret.
+
+    def access_token
+      @access_token || raise(UnauthorizedError, "You need to authorize the Dropbox user before you can call API methods")
+    end
+
     # Serializes this object into a string that can then be recreated with the
     # Dropbox::Session.deserialize method.
 
@@ -178,10 +184,6 @@ module Dropbox
     end
 
     private
-
-    def access_token
-      @access_token || raise(UnauthorizedError, "You need to authorize the Dropbox user before you can call API methods")
-    end
 
     def clone_with_host(host)
       session = dup
