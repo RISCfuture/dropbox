@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Morgan"]
-  s.date = %q{2010-10-06}
+  s.date = %q{2010-10-31}
   s.description = %q{An easy-to-use client library for the official Dropbox API.}
   s.email = %q{dropbox@timothymorgan.info}
   s.extra_rdoc_files = [
@@ -20,7 +20,10 @@ Gem::Specification.new do |s|
   s.files = [
     ".document",
      ".gitignore",
+     ".rspec",
      "ChangeLog",
+     "Gemfile",
+     "Gemfile.lock",
      "LICENSE",
      "README.rdoc",
      "Rakefile",
@@ -46,7 +49,6 @@ Gem::Specification.new do |s|
      "spec/dropbox/revision_spec.rb",
      "spec/dropbox/session_spec.rb",
      "spec/dropbox_spec.rb",
-     "spec/spec.opts",
      "spec/spec_helper.rb"
   ]
   s.homepage = %q{http://github.com/RISCfuture/dropbox}
@@ -69,20 +71,17 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
       s.add_runtime_dependency(%q<oauth>, [">= 0.3.6"])
       s.add_runtime_dependency(%q<json>, [">= 1.2.0"])
       s.add_runtime_dependency(%q<multipart-post>, [">= 1.0"])
       s.add_runtime_dependency(%q<mechanize>, [">= 1.0.0"])
     else
-      s.add_dependency(%q<rspec>, [">= 1.2.9"])
       s.add_dependency(%q<oauth>, [">= 0.3.6"])
       s.add_dependency(%q<json>, [">= 1.2.0"])
       s.add_dependency(%q<multipart-post>, [">= 1.0"])
       s.add_dependency(%q<mechanize>, [">= 1.0.0"])
     end
   else
-    s.add_dependency(%q<rspec>, [">= 1.2.9"])
     s.add_dependency(%q<oauth>, [">= 0.3.6"])
     s.add_dependency(%q<json>, [">= 1.2.0"])
     s.add_dependency(%q<multipart-post>, [">= 1.0"])

@@ -1,0 +1,40 @@
+GEM
+  remote: http://rubygems.org/
+  specs:
+    diff-lcs (1.1.2)
+    gemcutter (0.6.1)
+    git (1.2.5)
+    jeweler (1.4.0)
+      gemcutter (>= 0.1.0)
+      git (>= 1.2.5)
+      rubyforge (>= 2.0.0)
+    json (1.4.6)
+    json_pure (1.4.6)
+    mechanize (1.0.0)
+      nokogiri (>= 1.2.1)
+    multipart-post (1.0.1)
+    nokogiri (1.4.3.1)
+    oauth (0.4.3)
+    rspec (2.0.1)
+      rspec-core (~> 2.0.1)
+      rspec-expectations (~> 2.0.1)
+      rspec-mocks (~> 2.0.1)
+    rspec-core (2.0.1)
+    rspec-expectations (2.0.1)
+      diff-lcs (>= 1.1.2)
+    rspec-mocks (2.0.1)
+      rspec-core (~> 2.0.1)
+      rspec-expectations (~> 2.0.1)
+    rubyforge (2.0.4)
+      json_pure (>= 1.1.7)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  jeweler
+  json (>= 1.2.0)
+  mechanize (>= 1.0.0)
+  multipart-post (>= 1.0)
+  oauth (>= 0.3.6)
+  rspec (>= 2.0)
