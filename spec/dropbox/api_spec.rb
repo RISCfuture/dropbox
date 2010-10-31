@@ -122,11 +122,6 @@ describe Dropbox::API do
       @session.thumbnail(path)
     end
     
-    it "should pass along a size" do
-      should_receive_api_method_with_arguments @token_mock, :get, 'thumbnails', { :size => 'medium' }, @response, 'path/to/file', 'sandbox'
-      @session.thumbnail "path/to/file", 'medium'
-    end
-    
     it "should raise an error if too many arguments are given" do
       lambda { @session.thumbnail "path/to/file", 'large', 'oops', :foo => 'bar' }.should raise_error(ArgumentError)
     end
