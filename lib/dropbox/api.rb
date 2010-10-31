@@ -105,6 +105,8 @@ module Dropbox
     #
     # Options:
     #
+    # +format+:: The image format (see the API documentation for supported
+    #            formats).
     # +mode+:: Temporarily changes the API mode. See the MODES array.
     #
     # Examples:
@@ -117,16 +119,11 @@ module Dropbox
     #
     #  session.thumbnail('my/image.jpg', 'medium')
 
-    def thumbnail(*args)
-      options = args.extract_options!
-      path = args.shift
-      size = args.shift
-      raise ArgumentError, "thumbnail takes a path, an optional size, and optional options" unless path.kind_of?(String) and (size.kind_of?(String) or size.nil?) and args.empty?
-
+    def thumbnail(path, options={})\
       path = path.sub(/^\//, '')
       rest = Dropbox.check_path(path).split('/')
       rest << { :ssl => @ssl }
-      rest.last[:size] = size if size
+      rest.last.merge! options
 
       begin
         api_body :get, 'thumbnails', root(options), *rest
