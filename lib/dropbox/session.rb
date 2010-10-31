@@ -131,7 +131,7 @@ module Dropbox
 
           login_form.login_email  = @authorizing_user
           login_form.login_password = @authorizing_password
-          auth_page = login_form.submit()
+          auth_page = login_form.submit
 
           auth_form = auth_page.form_with(:action => 'authorize')
           if auth_form

@@ -1,48 +1,32 @@
-require 'rubygems'
 require 'rake'
-
 begin
-  require 'jeweler'
-  Jeweler::Tasks.new do |gem|
-    gem.name = "dropbox"
-    gem.version = File.read("VERSION").chomp.strip
-    gem.summary = %Q{Ruby client library for the official Dropbox API}
-    gem.description = %Q{An easy-to-use client library for the official Dropbox API.}
-    gem.email = "dropbox@timothymorgan.info"
-    gem.homepage = "http://github.com/RISCfuture/dropbox"
-    gem.authors = ["Tim Morgan"]
-
-    gem.files += FileList["lib/dropbox/*.rb"]
-    gem.add_development_dependency "rspec", ">= 1.2.9"
-    gem.add_runtime_dependency "oauth", ">= 0.3.6"
-    gem.add_runtime_dependency "json", ">= 1.2.0"
-    gem.add_runtime_dependency "multipart-post", ">= 1.0"
-    gem.add_runtime_dependency "mechanize", ">= 1.0.0"
-  end
-  Jeweler::GemcutterTasks.new
-  Jeweler::RubyforgeTasks.new
+  require 'bundler'
 rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it with: sudo gem install jeweler"
+  puts "Bundler is not installed; install with `gem install bundler`."
+  exit 1
 end
 
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_files = FileList['spec/**/*_spec.rb']
+Bundler.require :default
+
+Jeweler::Tasks.new do |gem|
+  gem.name = "dropbox"
+  gem.summary = %Q{Ruby client library for the official Dropbox API}
+  gem.description = %Q{An easy-to-use client library for the official Dropbox API.}
+  gem.email = "dropbox@timothymorgan.info"
+  gem.homepage = "http://github.com/RISCfuture/dropbox"
+  gem.authors = [ "Tim Morgan" ]
+  gem.add_dependency 'oauth', '>= 0.3.6'
+  gem.add_dependency 'json', '>= 1.2.0'
+  gem.add_dependency 'multipart-post', '>= 1.0'
+  gem.add_dependency 'mechanize', '>= 1.0.0'
 end
+Jeweler::GemcutterTasks.new
 
-Spec::Rake::SpecTask.new(:rcov) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
-end
-
-task :spec => :check_dependencies
-
-task :default => :spec
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new
 
 require 'rake/rdoctask'
-Rake::RDocTask.new do |rdoc|
+Rake::RDocTask.new(:doc) do |rdoc|
   version = File.exist?('VERSION') ? File.read('VERSION').chomp.strip : ""
 
   rdoc.rdoc_dir = 'rdoc'
@@ -51,3 +35,5 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('LICENSE')
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
+
+task(default: :spec)

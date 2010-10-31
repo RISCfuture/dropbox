@@ -21,6 +21,7 @@ coverage
 rdoc
 pkg
 .rvmrc
+.bundle
 
 ## PROJECT::SPECIFIC
 keys.json
