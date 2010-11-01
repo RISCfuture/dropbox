@@ -1,3 +1,11 @@
+1.2 (2010-10-31)
+
+* Updated thumbnail method for changes in the thumbnail API.
+* Added the ability to upload files from +StringIO+ objects.
+* Added option to customize uploaded file's remote name.
+* Added proxy support for additional actions.
+* Modernized gem: RSpec 2.0 compatible, now uses Bundler, etc.
+
 1.1.2 (2010-10-6)
 
 * Added ability to perform OAuth authorization on behalf of the user.
