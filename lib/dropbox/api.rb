@@ -197,7 +197,11 @@ module Dropbox
       request['authorization'] = oauth_signature.join(', ')
 
       proxy = URI.parse(@proxy || "")
-      response = Net::HTTP::Proxy(proxy.host, proxy.port).new(uri.host, uri.port).request(request)
+
+      netHttp = Net::HTTP::Proxy(proxy.host, proxy.port).new(uri.host, uri.port)
+      netHttp.use_ssl = @ssl
+      response = netHttp.request(request)
+
       if response.kind_of?(Net::HTTPSuccess) then
         begin
           return JSON.parse(response.body).symbolize_keys_recursively.to_struct_recursively
