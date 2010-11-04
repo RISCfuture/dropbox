@@ -22,6 +22,7 @@ rdoc
 pkg
 .rvmrc
 .bundle
+*.gem
 
 ## PROJECT::SPECIFIC
 keys.json
