@@ -1,13 +1,15 @@
-require 'rake'
+require 'rubygems'
+require 'bundler'
 begin
-  require 'bundler'
-rescue LoadError
-  puts "Bundler is not installed; install with `gem install bundler`."
-  exit 1
+  Bundler.setup(:default, :development)
+rescue Bundler::BundlerError => e
+  $stderr.puts e.message
+  $stderr.puts "Run `bundle install` to install missing gems"
+  exit e.status_code
 end
+require 'rake'
 
-Bundler.require :default
-
+require 'jeweler'
 Jeweler::Tasks.new do |gem|
   gem.name = "dropbox"
   gem.summary = %Q{Ruby client library for the official Dropbox API}
@@ -15,12 +17,8 @@ Jeweler::Tasks.new do |gem|
   gem.email = "dropbox@timothymorgan.info"
   gem.homepage = "http://github.com/RISCfuture/dropbox"
   gem.authors = [ "Tim Morgan" ]
-  gem.add_dependency 'oauth', '>= 0.3.6'
-  gem.add_dependency 'json', '>= 1.2.0'
-  gem.add_dependency 'multipart-post', '>= 1.0'
-  gem.add_dependency 'mechanize', '>= 1.0.0'
 end
-Jeweler::GemcutterTasks.new
+Jeweler::RubygemsDotOrgTasks.new
 
 require 'rspec/core/rake_task'
 RSpec::Core::RakeTask.new
@@ -36,4 +34,4 @@ Rake::RDocTask.new(:doc) do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-task(default: :spec)
+task :default => :spec
