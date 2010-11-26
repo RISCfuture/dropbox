@@ -1,3 +1,4 @@
+require 'bundler'
 Bundler.require :default, :test
 
 $LOAD_PATH.unshift(File.dirname(__FILE__))

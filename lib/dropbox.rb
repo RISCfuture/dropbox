@@ -28,9 +28,9 @@ module Dropbox
   # The API version this client works with.
   VERSION = "0"
   # The host serving API requests.
-  HOST = "http://api.dropbox.com"
+  HOST = "http://www.dropbox.com"
   # The SSL host serving API requests.
-  SSL_HOST = "https://api.dropbox.com"
+  SSL_HOST = "https://www.dropbox.com"
   # Alternate hosts for other API requests.
   ALTERNATE_HOSTS = {
     'event_content' => 'http://api-content.dropbox.com',
