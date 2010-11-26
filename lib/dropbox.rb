@@ -27,6 +27,10 @@ require 'dropbox/session'
 module Dropbox
   # The API version this client works with.
   VERSION = "0"
+  # The host to authenticate user.
+  AUTH_HOST = "http://www.dropbox.com"
+  # The SSL host to authenticate user.
+  AUTH_SSL_HOST = "https://www.dropbox.com"
   # The host serving API requests.
   HOST = "http://api.dropbox.com"
   # The SSL host serving API requests.

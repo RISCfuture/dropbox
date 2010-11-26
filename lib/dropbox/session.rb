@@ -76,7 +76,7 @@ module Dropbox
       @proxy = options[:proxy] || ENV["HTTP_PROXY"] || ENV["http_proxy"]
       @proxy = nil if options[:noproxy].to_bool
       @consumer = OAuth::Consumer.new(oauth_key, oauth_secret,
-                                      :site => (@ssl ? Dropbox::SSL_HOST : Dropbox::HOST),
+                                      :site => (@ssl ? Dropbox::AUTH_SSL_HOST : Dropbox::AUTH_HOST),
                                       :proxy => @proxy,
                                       :request_token_path => "/#{Dropbox::VERSION}/oauth/request_token",
                                       :authorize_path => "/#{Dropbox::VERSION}/oauth/authorize",
