@@ -1,3 +1,8 @@
+1.2.1 (2010-11-26)
+
+* Changed authentication host.
+* Upgraded to Jeweler 1.5.
+
 1.2 (2010-10-31)
 
 * Updated thumbnail method for changes in the thumbnail API.
