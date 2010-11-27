@@ -1,3 +1,7 @@
+1.2.2 (2010-11-27)
+
+* Fixed dependency bug.
+
 1.2.1 (2010-11-26)
 
 * Changed authentication host.

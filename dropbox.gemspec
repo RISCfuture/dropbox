@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{dropbox}
-  s.version = "1.2.1"
+  s.version = "1.2.2"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Morgan"]
-  s.date = %q{2010-11-26}
+  s.date = %q{2010-11-27}
   s.description = %q{An easy-to-use client library for the official Dropbox API.}
   s.email = %q{dropbox@timothymorgan.info}
   s.extra_rdoc_files = [
@@ -73,8 +73,8 @@ Gem::Specification.new do |s|
       s.add_runtime_dependency(%q<json>, [">= 1.2.0"])
       s.add_runtime_dependency(%q<multipart-post>, [">= 1.0"])
       s.add_runtime_dependency(%q<mechanize>, [">= 1.0.0"])
-      s.add_runtime_dependency(%q<jeweler>, [">= 0"])
-      s.add_runtime_dependency(%q<rspec>, [">= 2.0"])
+      s.add_development_dependency(%q<jeweler>, [">= 0"])
+      s.add_development_dependency(%q<rspec>, [">= 2.0"])
     else
       s.add_dependency(%q<oauth>, [">= 0.3.6"])
       s.add_dependency(%q<json>, [">= 1.2.0"])
