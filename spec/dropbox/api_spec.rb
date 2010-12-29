@@ -30,7 +30,7 @@ def stub_for_upload_testing
   @response.stub!(:kind_of?).with(Net::HTTPSuccess).and_return(true)
   @response.stub!(:body).and_return('{"test":"val"}')
 
-  @http = mock('Net::HTTP', :request => @response)
+  @http = mock('Net::HTTP', :request => @response, :use_ssl= => nil)
   Net::HTTP.stub!(:new).and_return(@http)
 end
 
@@ -643,7 +643,7 @@ describe Dropbox::API do
 
       it "should send the request" do
         uri = URI.parse(Dropbox::ALTERNATE_HOSTS['files'])
-        @http = mock('Net::HTTP', :request => @response)
+        @http = mock('Net::HTTP', :request => @response, :use_ssl= => nil)
         Net::HTTP.stub!(:new).and_return(@http)
 
         @session.upload __FILE__, 'test'
@@ -654,7 +654,7 @@ describe Dropbox::API do
         @session.authorize
         
         uri = URI.parse(Dropbox::ALTERNATE_SSL_HOSTS['files'])
-        @http = mock('Net::HTTP', :request => @response)
+        @http = mock('Net::HTTP', :request => @response, :use_ssl= => nil)
         Net::HTTP.stub!(:new).and_return(@http)
 
         @session.upload __FILE__, 'test'
