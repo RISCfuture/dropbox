@@ -502,6 +502,19 @@ describe Dropbox::API do
       response.directory?.should be_true
       response.hsh.directory?.should be_false
     end
+
+    it "should add a hash option when prior_response is set" do
+      should_receive_api_method_with_arguments @token_mock, :get, 'metadata', { :list => 'true', :hash => '123abc' }, @response, 'some/file', 'sandbox'
+      @session.metadata 'some/file', :prior_response => mock('metadata response', :hash => '123abc')
+    end
+
+    it "should return the prior_response when the response code is 304" do
+      response_acts_as Net::HTTPNotModified
+      @token_mock.stub!(:get).and_return(@response)
+      prior = mock('metadata response', :hash => '123abc')
+
+      @session.metadata('path', :prior_response => prior).should eql(prior)
+    end
   end
 
   describe "#list" do

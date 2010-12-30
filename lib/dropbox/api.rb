@@ -383,9 +383,12 @@ module Dropbox
     # +limit+:: Set this value to limit the number of entries returned when
     #           listing a directory. If the result has more than this number of
     #           entries, a TooManyEntriesError will be raised.
+    # +prior_response+:: The response from a prior call to metadata for the same
+    #                    path. If the metadata has not changed since the prior
+    #                    call, the entire metadata will not be re-downloaded.
+    #                    Operation is undefined if the given value was for a
+    #                    call to metadata with a different path.
     # +mode+:: Temporarily changes the API mode. See the MODES array.
-    #
-    # TODO hash option seems to return HTTPBadRequest for now
 
     def metadata(path, options={})
       path = path.sub(/^\//, '')
@@ -396,7 +399,7 @@ module Dropbox
       args += Dropbox.check_path(path).split('/')
       args << Hash.new
       args.last[:file_limit] = options[:limit] if options[:limit]
-      #args.last[:hash] = options[:hash] if options[:hash]
+      args.last[:hash] = options[:prior_response].hash if options[:prior_response] and options[:prior_response].hash
       args.last[:list] = !(options[:suppress_list].to_bool)
       args.last[:ssl] = @ssl
 
@@ -405,7 +408,7 @@ module Dropbox
       rescue UnsuccessfulResponseError => error
         raise TooManyEntriesError.new(path) if error.response.kind_of?(Net::HTTPNotAcceptable)
         raise FileNotFoundError.new(path) if error.response.kind_of?(Net::HTTPNotFound)
-        #return :not_modified if error.kind_of?(Net::HTTPNotModified)
+        return options[:prior_response] if error.response.kind_of?(Net::HTTPNotModified)
         raise error
       end
     end
