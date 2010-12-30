@@ -22,6 +22,26 @@ describe Dropbox::Entry do
 
       @entry.metadata(:sandbox => true)
     end
+
+    it "should record prior responses and use them automatically" do
+      result = mock('result')
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.metadata.should eql(result)
+
+      @session.should_receive(:metadata).once.with(@path, { :prior_response => result }).and_return(result)
+      @entry.metadata.should eql(result)
+    end
+
+    it "... unless :force is set to true" do
+      result = mock('result')
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.metadata
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.metadata(:force => true)
+    end
   end
 
   describe "#move" do

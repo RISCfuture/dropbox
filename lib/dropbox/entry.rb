@@ -31,10 +31,16 @@ module Dropbox
       @path = path
     end
 
-    # Delegates to Dropbox::API#metadata.
+    # Delegates to Dropbox::API#metadata. Additional options:
+    #
+    # +force+:: Normally, subsequent calls to this method will use cached
+    #           results if the file hasn't been changed. To download the full
+    #           metadata even if the file has not been changed, set this to
+    #           +true+.
 
     def metadata(options={})
-      @session.metadata path, options
+      @previous_metadata = nil if options.delete(:force)
+      @previous_metadata = @session.metadata path, (@previous_metadata ? options.merge(:prior_response => @previous_metadata) : options)
     end
     alias :info :metadata
     
