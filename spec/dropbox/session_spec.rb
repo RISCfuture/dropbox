@@ -169,7 +169,7 @@ describe Dropbox::Session do
     end
   end
 
-  describe "with Dropbox keys " do
+  describe "with Dropbox keys" do
     before(:all) do
       @keys = read_keys_file
     end

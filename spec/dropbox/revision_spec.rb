@@ -133,6 +133,10 @@ describe Dropbox::Revision do
   end
 
   describe "#content_loaded?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should return true if the content is loaded" do
       pretend_content_and_metadata_is_loaded @revision, @session
       @revision.should be_content_loaded
@@ -140,6 +144,10 @@ describe Dropbox::Revision do
   end
 
   describe "#metadata_loaded?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should return true if the metadata is loaded" do
       pretend_content_and_metadata_is_loaded @revision, @session
       @revision.should be_metadata_loaded
@@ -147,6 +155,10 @@ describe Dropbox::Revision do
   end
 
   describe "#latest?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an exception if the metadata is not yet loaded" do
       lambda { @revision.latest? }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -163,6 +175,10 @@ describe Dropbox::Revision do
   end
 
   describe "#directory?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an exception if the metadata is not yet loaded" do
       lambda { @revision.directory? }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -179,6 +195,10 @@ describe Dropbox::Revision do
   end
 
   describe "#modified" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an exception if the metadata is not yet loaded" do
       lambda { @revision.modified }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -190,6 +210,10 @@ describe Dropbox::Revision do
   end
 
   describe "#error?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should return true if there was an error" do
       pretend_error_occurred @revision
       @revision.should be_error
@@ -202,6 +226,10 @@ describe Dropbox::Revision do
   end
   
   describe "#deleted?" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an exception if the metadata is not yet loaded" do
       lambda { @revision.deleted? }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -222,6 +250,10 @@ describe Dropbox::Revision do
   end
 
   describe "#content" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an exception if the content is not yet loaded" do
       lambda { @revision.content }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -234,6 +266,7 @@ describe Dropbox::Revision do
 
   describe "#method_missing" do
     before :each do
+      @session = mock('Dropbox::Session')
       pretend_content_and_metadata_is_loaded @revision, @session, :size => 123
     end
 
@@ -251,6 +284,10 @@ describe Dropbox::Revision do
   end
 
   describe "#metadata_for_latest_revision" do
+    before :each do
+      @session = mock('Dropbox::Session')
+    end
+
     it "should raise an error if metadata has not yet been loaded" do
       lambda { @revision.metadata_for_latest_revision @session }.should raise_error(Dropbox::NotLoadedError)
     end
@@ -272,6 +309,7 @@ describe Dropbox::Revision do
     describe "with an error" do
       before :each do
         @metadata = { :error => 403 }
+        @session = mock('Dropbox::Session')
       end
 
       it "should set the error attribute" do
@@ -301,6 +339,7 @@ describe Dropbox::Revision do
             :mtime => (Time.now.to_i - rand(60*60*24*30)),
             :latest => (rand(2) == 0)
         }
+        @session = mock('Dropbox::Session')
       end
 
       it "should clear the error attribute" do
