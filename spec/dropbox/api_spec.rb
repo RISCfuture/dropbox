@@ -606,6 +606,11 @@ describe Dropbox::API do
           lambda { @session.upload @string_io, 'remote/' }.should raise_error(ArgumentError)
         end
       end
+
+      it "should accept a custom read timeout" do
+        @http.should_receive(:read_timeout=).once.with(10)
+        @session.upload StringIO.new('test123'), 'remote/', :as => 'name.txt', :timeout => 10
+      end
     end
 
     describe "request" do

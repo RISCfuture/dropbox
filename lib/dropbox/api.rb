@@ -147,6 +147,9 @@ module Dropbox
     # +mode+:: Temporarily changes the API mode. See the MODES array.
     # +as+:: Specify a custom name for the uploaded file (required when
     #        uploading from a +StringIO+ stream).
+    # +timeout+:: The amount of time to wait for a response from the Dropbox
+    #             server (in seconds). By default it's 60; set this higher when
+    #             uploading large files.
     #
     # Examples:
     #
@@ -199,6 +202,7 @@ module Dropbox
       proxy = URI.parse(@proxy || "")
       http = Net::HTTP::Proxy(proxy.host, proxy.port).new(uri.host, uri.port)
       http.use_ssl = @ssl
+      http.read_timeout = options[:timeout] if options[:timeout]
       response = http.request(request)
 
       if response.kind_of?(Net::HTTPSuccess) then
