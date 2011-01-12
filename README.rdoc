@@ -16,14 +16,15 @@ http://developers.dropbox.com
  puts "Visit #{session.authorize_url} to log in to Dropbox. Hit enter when you have done this."
  gets
  session.authorize
+ session.mode = :dropbox
 
  # STEP 2: Play!
- session.upload('testfile.txt')
+ session.upload('testfile.txt', 'Photos')
  uploaded_file = session.file('testfile.txt')
  puts uploaded_file.metadata.size
 
- uploaded_file.move 'new_name.txt'
- uploaded_file.delete
+ session.move 'Photos/testfile.txt', 'Public/'
+ session.delete('Public/testfile.txt')
 
 == Tutorial by Example, Rails Edition
 
