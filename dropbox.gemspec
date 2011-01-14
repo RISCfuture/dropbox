@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{dropbox}
-  s.version = "1.2.2"
+  s.version = "1.2.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Tim Morgan"]
-  s.date = %q{2010-11-27}
+  s.date = %q{2011-01-14}
   s.description = %q{An easy-to-use client library for the official Dropbox API.}
   s.email = %q{dropbox@timothymorgan.info}
   s.extra_rdoc_files = [
@@ -28,6 +28,7 @@ Gem::Specification.new do |s|
     "Rakefile",
     "VERSION",
     "dropbox.gemspec",
+    "examples/upload_and_delete.rb",
     "keys.json.example",
     "lib/dropbox.rb",
     "lib/dropbox/api.rb",
@@ -55,6 +56,7 @@ Gem::Specification.new do |s|
   s.rubygems_version = %q{1.3.7}
   s.summary = %q{Ruby client library for the official Dropbox API}
   s.test_files = [
+    "examples/upload_and_delete.rb",
     "spec/dropbox/api_spec.rb",
     "spec/dropbox/entry_spec.rb",
     "spec/dropbox/event_spec.rb",

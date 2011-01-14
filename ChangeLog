@@ -1,3 +1,10 @@
+1.2.3 (2011-01-14)
+
+* Now supports caching metadata calls
+* Large uploads can use custom timeouts
+* Fix for updated multipart-post gem
+* SSL upload fix
+
 1.2.2 (2010-11-27)
 
 * Fixed dependency bug.
