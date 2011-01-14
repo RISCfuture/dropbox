@@ -189,7 +189,7 @@ module Dropbox
       session = dup
       consumer = OAuth::Consumer.new(@consumer.key, @consumer.secret, :site => host, :proxy => @proxy)
       session.instance_variable_set :@consumer, consumer
-      session.instance_variable_set :@access_token, OAuth::AccessToken.new(consumer, @access_token.token, @access_token.secret)
+      session.instance_variable_set :@access_token, OAuth::AccessToken.new(consumer, @access_token.token, @access_token.secret) if @access_token
       return session
     end
   end
