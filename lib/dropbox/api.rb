@@ -171,11 +171,17 @@ module Dropbox
         raise(ArgumentError, "Must specify the :as option when uploading from StringIO") unless options[:as]
         file = local_file
         local_path = options[:as]
+        
+        # hack for bug in UploadIO
+        class << file
+          attr_accessor :path
+        end
+        file.path = local_path
       else
         raise ArgumentError, "local_file must be a File, StringIO, or file path"
       end
       
-      name = options.delete(:as).to_s if options[:as]
+      name = File.basename(options.delete(:as)) if options[:as]
 
       remote_path = remote_path.sub(/^\//, '')
       remote_path = Dropbox.check_path(remote_path).split('/')
@@ -192,11 +198,10 @@ module Dropbox
       oauth_signature = oauth_request.to_hash['authorization']
 
       request = Net::HTTP::Post::Multipart.new(uri.path,
-                                               'file' => UploadIO.convert!(
+                                               'file' => UploadIO.new(
                                                        file,
                                                        'application/octet-stream',
-                                                       name,
-                                                       local_path))
+                                                       name))
       request['authorization'] = oauth_signature.join(', ')
 
       proxy = URI.parse(@proxy || "")

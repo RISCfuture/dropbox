@@ -559,12 +559,12 @@ describe Dropbox::API do
         end
 
         it "should use the File object as the stream" do
-          UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
+          UploadIO.should_receive(:new).once.with(@file, anything, File.basename(__FILE__))
           @session.upload @file, 'remote/'
         end
 
         it "should accept a custom file name via the :as parameter" do
-          UploadIO.should_receive(:convert!).once.with(@file, anything, 'myfile.txt', __FILE__)
+          UploadIO.should_receive(:new).once.with(@file, anything, 'myfile.txt')
           @session.upload @file, 'remote/', :as => 'myfile.txt'
         end
       end
@@ -577,12 +577,12 @@ describe Dropbox::API do
         end
 
         it "should use the file at that path as the stream" do
-          UploadIO.should_receive(:convert!).once.with(@file, anything, File.basename(__FILE__), __FILE__)
+          UploadIO.should_receive(:new).once.with(@file, anything, File.basename(__FILE__))
           @session.upload @string, 'remote/'
         end
 
         it "should accept a custom file name via the :as parameter" do
-          UploadIO.should_receive(:convert!).once.with(@file, anything, 'myfile.txt', __FILE__)
+          UploadIO.should_receive(:new).once.with(@file, anything, 'myfile.txt')
           @session.upload @string, 'remote/', :as => 'myfile.txt'
         end
       end
@@ -598,7 +598,7 @@ describe Dropbox::API do
         end
 
         it "should use the StringIO as the stream and take filename from the options" do
-          UploadIO.should_receive(:convert!).once.with(@string_io, anything, @filename, @filename)
+          UploadIO.should_receive(:new).once.with(@string_io, anything, @filename)
           @session.upload @string_io, 'remote/', :as => @filename
         end
 
@@ -654,7 +654,7 @@ describe Dropbox::API do
       end
 
       it "should create a multipart POST request with the 'file' parameter set to the file of type application/octet-stream" do
-        Net::HTTP::Post::Multipart.should_receive(:new).once.with("/#{Dropbox::VERSION}/files/sandbox/hello", hash_including('file' => an_instance_of(File))).and_return(@request)
+        Net::HTTP::Post::Multipart.should_receive(:new).once.with("/#{Dropbox::VERSION}/files/sandbox/hello", hash_including('file' => an_instance_of(UploadIO))).and_return(@request)
 
         @session.upload __FILE__, 'hello'
       end
