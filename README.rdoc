@@ -13,13 +13,14 @@ http://developers.dropbox.com
 
  # STEP 1: Authorize the user
  session = Dropbox::Session.new('your_consumer_key', 'your_consumer_secret')
+ session.mode = :sandbox # might need to set this to :dropbox; consult your API account page
  puts "Visit #{session.authorize_url} to log in to Dropbox. Hit enter when you have done this."
  gets
  session.authorize
 
  # STEP 2: Play!
  session.upload('testfile.txt')
- uploaded_file = session.file('testfile.txt')
+ uploaded_file = session.file('testfile.txt', '/')
  puts uploaded_file.metadata.size
 
  uploaded_file.move 'new_name.txt'
