@@ -19,8 +19,8 @@ http://developers.dropbox.com
  session.authorize
 
  # STEP 2: Play!
- session.upload('testfile.txt')
- uploaded_file = session.file('testfile.txt', '/')
+ session.upload('testfile.txt', '/')
+ uploaded_file = session.file('testfile.txt')
  puts uploaded_file.metadata.size
 
  uploaded_file.move 'new_name.txt'
