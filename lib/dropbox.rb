@@ -60,7 +60,7 @@ module Dropbox
 
   def self.check_path(path) # :nodoc:
     raise ArgumentError, "Backslashes are not allowed in Dropbox paths" if path.include?('\\')
-    raise ArgumentError, "Dropbox paths are limited to 256 characters in length" if path.size > 256
+    raise ArgumentError, "File names are limited to 255 characters" if path.split('/').last.size > 255
     return path
   end
 end
