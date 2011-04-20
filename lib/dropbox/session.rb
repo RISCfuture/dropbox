@@ -81,7 +81,7 @@ module Dropbox
                                       :request_token_path => "/#{Dropbox::VERSION}/oauth/request_token",
                                       :authorize_path => "/#{Dropbox::VERSION}/oauth/authorize",
                                       :access_token_path => "/#{Dropbox::VERSION}/oauth/access_token")
-      @request_token = @consumer.get_request_token
+      @request_token = @consumer.get_request_token unless options[:already_authorized] == true
     end
 
     # Returns a URL that is used to complete the authorization process. Visiting
@@ -169,7 +169,7 @@ module Dropbox
       consumer_key, consumer_secret, authorized, token, token_secret, ssl = YAML.load(StringIO.new(data))
       raise ArgumentError, "Must provide a properly serialized #{self.to_s} instance" unless [ consumer_key, consumer_secret, token, token_secret ].all? and authorized == true or authorized == false
 
-      session = self.new(consumer_key, consumer_secret, :ssl => ssl)
+      session = self.new(consumer_key, consumer_secret, :ssl => ssl, :already_authorized => authorized)
       if authorized then
         session.instance_variable_set :@access_token, OAuth::AccessToken.new(session.instance_variable_get(:@consumer), token, token_secret)
       else
