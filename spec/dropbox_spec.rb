@@ -53,5 +53,10 @@ describe Dropbox do
       path = "valid path/here"
       lambda { Dropbox.check_path(path).should eql(path) }.should_not raise_error
     end
+
+    it "should allow a path that is empty" do
+      path = {}
+      lambda { Dropbox.check_path(path).should eql(path) }.should_not raise_error
+    end
   end
 end
