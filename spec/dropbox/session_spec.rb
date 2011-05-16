@@ -132,7 +132,7 @@ describe Dropbox::Session do
       @token_mock.stub!(:token).and_return("request token")
       @token_mock.stub!(:secret).and_return("request token secret")
 
-      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false ].to_yaml)
+      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false, :sandbox ].to_yaml)
     end
 
     it "should serialize the SSL setting" do
@@ -142,7 +142,18 @@ describe Dropbox::Session do
       @token_mock.stub!(:token).and_return("request token")
       @token_mock.stub!(:secret).and_return("request token secret")
 
-      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", true ].to_yaml)
+      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", true, :sandbox ].to_yaml)
+    end
+    
+    it "should serialize the mode" do
+      @session = Dropbox::Session.new('foo', 'bar')
+      @consumer_mock.stub!(:key).and_return("consumer key")
+      @consumer_mock.stub!(:secret).and_return("consumer secret")
+      @token_mock.stub!(:token).and_return("request token")
+      @token_mock.stub!(:secret).and_return("request token secret")
+      @session.mode = :dropbox
+
+      @session.serialize.should eql([ "consumer key", "consumer secret", false, "request token", "request token secret", false, :dropbox ].to_yaml)
     end
   end
 
@@ -152,19 +163,26 @@ describe Dropbox::Session do
     end
 
     it "should raise an error if an improper YAML is provided" do
-      lambda { Dropbox::Session.deserialize([ 1, 2, 3].to_yaml) }.should raise_error(ArgumentError)
+      lambda { Dropbox::Session.deserialize([ 1, 2, 3 ].to_yaml) }.should raise_error(ArgumentError)
     end
 
     it "should return a properly initialized unauthorized instance" do
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true, :already_authorized => false).and_return(@mock_session)
+      @mock_session.should_receive(:mode=).once.with(:dropbox)
 
-      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true ].to_yaml).should eql(@mock_session)
+      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true, :dropbox ].to_yaml).should eql(@mock_session)
       #TODO request token remains opaque for purposes of testing
     end
 
     it "should allow the SSL option to be left out" do
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil, :already_authorized=>false).and_return(@mock_session)
+      @mock_session.stub!(:mode=)
 
+      Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(@mock_session)
+    end
+    
+    it "should allow the mode to be left out" do
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil, :already_authorized=>false).and_return(@mock_session)
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(@mock_session)
     end
   end
@@ -231,7 +249,7 @@ describe Dropbox::Session do
       it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
         @session = new_session
         @session.authorize!.should be_true
-        @session.serialize.should eql([ @keys['key'], @keys['secret'], true, @session.send(:access_token).token, @session.send(:access_token).secret, false ].to_yaml)
+        @session.serialize.should eql([ @keys['key'], @keys['secret'], true, @session.send(:access_token).token, @session.send(:access_token).secret, false, :sandbox ].to_yaml)
       end
     end
   end
