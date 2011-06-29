@@ -169,19 +169,30 @@ describe Dropbox::Session do
     it "should return a properly initialized unauthorized instance" do
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true, :already_authorized => false).and_return(@mock_session)
       @mock_session.should_receive(:mode=).once.with(:dropbox)
+      @mock_session.should_receive(:set_request_token).once.with('a', 'b')
 
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b', true, :dropbox ].to_yaml).should eql(@mock_session)
-      #TODO request token remains opaque for purposes of testing
+    end
+
+    it "should return a properly initialized authorized instance" do
+      Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => true, :already_authorized => true).and_return(@mock_session)
+      @mock_session.should_receive(:mode=).once.with(:dropbox)
+      @mock_session.should_receive(:set_access_token).once.with('a', 'b')
+
+      Dropbox::Session.deserialize([ 'key', 'secret', true, 'a', 'b', true, :dropbox ].to_yaml).should eql(@mock_session)
     end
 
     it "should allow the SSL option to be left out" do
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil, :already_authorized=>false).and_return(@mock_session)
       @mock_session.stub!(:mode=)
+      @mock_session.stub!(:set_request_token)
 
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(@mock_session)
     end
     
     it "should allow the mode to be left out" do
+      @mock_session.stub!(:set_request_token)
+      
       Dropbox::Session.should_receive(:new).once.with('key', 'secret', :ssl => nil, :already_authorized=>false).and_return(@mock_session)
       Dropbox::Session.deserialize([ 'key', 'secret', false, 'a', 'b' ].to_yaml).should eql(@mock_session)
     end

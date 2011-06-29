@@ -171,13 +171,27 @@ module Dropbox
 
       session = self.new(consumer_key, consumer_secret, :ssl => ssl, :already_authorized => authorized)
       if authorized then
-        session.instance_variable_set :@access_token, OAuth::AccessToken.new(session.instance_variable_get(:@consumer), token, token_secret)
+        session.set_access_token token, token_secret
       else
-        session.instance_variable_set :@request_token, OAuth::RequestToken.new(session.instance_variable_get(:@consumer), token, token_secret)
+        session.set_request_token token, token_secret
       end
       session.mode = mode if mode
 
       return session
+    end
+
+    # Manually sets the OAuth request token. Use this method if you are doing
+    # your own OAuth elsewhere.
+
+    def set_request_token(token, token_secret)
+      @request_token = OAuth::RequestToken.new(@consumer, token, token_secret)
+    end
+
+    # Manually sets the OAuth access token. Use this method if you are doing
+    # your own OAuth elsewhere.
+
+    def set_access_token(token, token_secret)
+      @access_token = OAuth::AccessToken.new(@consumer, token, token_secret)
     end
 
     def inspect # :nodoc:
