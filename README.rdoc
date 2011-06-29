@@ -26,6 +26,16 @@ http://developers.dropbox.com
  uploaded_file.move 'new_name.txt'
  uploaded_file.delete
 
+ # STEP 3: Save session for later
+ File.open('serialized_session.txt', 'w') do |f|
+   f.puts session.serialize
+ end
+
+ # STEP 4: Play with saved session!
+ new_session = Dropbox::Session.deserialize(File.read('serialized_session.txt'))
+ account = new_session.account
+ puts account.display_name
+
 == Tutorial by Example, Rails Edition
 
 A simple Rails controller that allows a user to first authorize their Dropbox
