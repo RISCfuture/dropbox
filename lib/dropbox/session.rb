@@ -1,7 +1,6 @@
 # Defines the Dropbox::Session class.
 
 require 'oauth'
-require 'mechanize'
 
 module Dropbox
 
@@ -48,11 +47,6 @@ module Dropbox
 
   class Session
     include API
-    
-    # The email of a Dropbox account to automatically authorize.
-    attr_accessor :authorizing_user
-    # The password of a Dropbox account to automatically authorize.
-    attr_accessor :authorizing_password
 
     # Begins the authorization process. Provide the OAuth key and secret of your
     # API account, assigned by Dropbox. This is the first step in the
@@ -61,17 +55,9 @@ module Dropbox
     # Options:
     #
     # +ssl+:: If true, uses SSL to connect to the Dropbox API server.
-    # +authorizing_user+:: The email of a Dropbox account to automatically
-    #                      authorize.
-    # +authorizing_password+:: The password of a Dropbox account to
-    #                          automatically authorize.
 
     def initialize(oauth_key, oauth_secret, options={})
       @ssl = options[:ssl].to_bool
-
-      # necessary for the automatic authorization in #authorize!
-      @authorizing_user = options[:authorizing_user] if options[:authorizing_user]
-      @authorizing_password = options[:authorizing_password] if options[:authorizing_password]
 
       @proxy = options[:proxy] || ENV["HTTP_PROXY"] || ENV["http_proxy"]
       @proxy = nil if options[:noproxy].to_bool
@@ -117,32 +103,6 @@ module Dropbox
 
     def authorized?
       @access_token.to_bool
-    end
-    
-    # Automatically complete the authorization step of the OAuth process. You
-    # must have provided the +authorizing_user+ and +authorizing_password+
-    # options. Raises a Dropbox::UnauthorizedError on failure.
-    
-    def authorize!
-      begin
-        a = Mechanize.new
-        a.get(authorize_url) do |page|
-          login_form = page.form_with(:action => '/login')
-
-          login_form.login_email  = @authorizing_user
-          login_form.login_password = @authorizing_password
-          auth_page = login_form.submit
-
-          auth_form = auth_page.form_with(:action => 'authorize')
-          if auth_form
-            auth_button = auth_form.button_with(:value => "Allow")
-            auth_form.click_button
-          end
-        end
-      rescue OAuth::Unauthorized => e
-        raise Dropbox::UnauthorizedError
-      end
-      authorize
     end
 
     # Returns the OAuth access_token which allows access to token and secret.

@@ -204,7 +204,7 @@ describe Dropbox::Session do
     end
 
     def new_session
-      Dropbox::Session.new(@keys['key'], @keys['secret'], :authorizing_user => @keys['email'], :authorizing_password => @keys['password'])
+      Dropbox::Session.new(@keys['key'], @keys['secret'])
     end
 
     describe "#authorized?" do
@@ -217,39 +217,15 @@ describe Dropbox::Session do
       end
 
       it "should be true for sessions that have been authorized" do
-        @session.authorize!
+        @session.set_access_token 'foo', 'bar'
         @session.should be_authorized
-      end
-    end
-
-    describe "#authorize!" do
-      describe "with credentials" do
-        before(:each) do
-          @session = new_session
-        end
-
-        it "should not fail" do
-          lambda { @session.authorize! }.should_not raise_error
-        end
-
-        it "should return the result of #authorize" do
-          @session.should_receive(:authorize).and_return("winner!")
-          @session.authorize!.should == "winner!"
-        end
-      end
-
-      describe "with no credentials" do
-        it "should fail" do
-          @session = Dropbox::Session.new(@keys['key'], @keys['password'])
-          lambda { @session.authorize! }.should raise_error
-        end
       end
     end
 
     describe ".deserialize" do
       it "should return a properly initialized authorized instance" do
         @session = new_session
-        @session.authorize!.should be_true
+        @session.set_access_token 'foo', 'bar'
         @session_clone = Dropbox::Session.deserialize(@session.serialize)
 
         @session.serialize.should == @session_clone.serialize
@@ -259,8 +235,8 @@ describe Dropbox::Session do
     describe "#serialize" do
       it "should return the consumer key and secret and the access token and secret in YAML form if authorized" do
         @session = new_session
-        @session.authorize!.should be_true
-        @session.serialize.should eql([ @keys['key'], @keys['secret'], true, @session.send(:access_token).token, @session.send(:access_token).secret, false, :sandbox ].to_yaml)
+        @session.set_access_token 'foo', 'bar'
+        @session.serialize.should eql([ @keys['key'], @keys['secret'], true, 'foo', 'bar', false, :sandbox ].to_yaml)
       end
     end
   end
