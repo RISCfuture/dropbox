@@ -20,6 +20,10 @@ module ExternalKeysFileHelper
     
     data
   end
+  
+  def write_keys_file(keys)
+    File.open('keys.json', 'w') { |f| f.puts keys.to_json }
+  end
 end
 
 RSpec.configure do |config|
