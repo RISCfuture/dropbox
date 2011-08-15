@@ -43,11 +43,18 @@ module Dropbox
       @previous_metadata = @session.metadata path, (@previous_metadata ? options.merge(:prior_response => @previous_metadata) : options)
     end
     alias :info :metadata
-    
-    # Delegates to Dropbox::API#list
+
+    #
+    # @return [Array<Dropbox::Entry>|nil] returns nil, if path is not a directory
+    # use Dropbox::API#list
 
     def list(options={})
-      @session.list path, options
+      listing = @session.list(path, options)
+      return if listing.nil?
+
+      listing.map do |struct|
+        self.class.new(@session, struct.path)
+      end
     end
     alias :ls :list
 
@@ -88,9 +95,9 @@ module Dropbox
       @session.download path, options
     end
     alias :body :download
-    
+
     # Delegates to Dropbox::API#thumbnail.
-    
+
     def thumbnail(*args)
       @session.thumbnail path, *args
     end

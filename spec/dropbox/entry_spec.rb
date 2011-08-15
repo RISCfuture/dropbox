@@ -145,7 +145,7 @@ describe Dropbox::Entry do
       @entry.download(:sandbox => true)
     end
   end
-  
+
   describe "#thumbnail" do
     it "should delegate to the session and return the result" do
       result = mock('result')
@@ -153,7 +153,7 @@ describe Dropbox::Entry do
 
       @entry.thumbnail.should eql(result)
     end
-    
+
     it "should pass along a size" do
       result = mock('result')
       @session.should_receive(:thumbnail).once.with(@path, 'medium').and_return(result)
@@ -167,7 +167,7 @@ describe Dropbox::Entry do
 
       @entry.thumbnail(:sandbox => true).should eql(result)
     end
-    
+
     it "should pass along a size and options" do
       result = mock('result')
       @session.should_receive(:thumbnail).once.with(@path, 'medium', { :sandbox => true }).and_return(result)
@@ -189,6 +189,37 @@ describe Dropbox::Entry do
       @session.should_receive(:link).once.with(@path, { :sandbox => true }).and_return(result)
 
       @entry.link(:sandbox => true)
+    end
+  end
+
+  describe "#list" do
+    it "should use the session#list" do
+      @session.should_receive(:list).and_return([])
+      @entry.list
+    end
+
+    it "returns array of Entry objects" do
+      result =
+      1.upto(5).inject([]) do |result, i|
+        struct = mock("struct#{i}")
+        struct.stub(:path).and_return("/file#{i}")
+
+        result << struct
+      end
+      @session.stub(:list).and_return(result)
+
+      listing = @entry.list
+
+      listing.should have(5).objects
+      listing.each do |item|
+        item.should be_instance_of(Dropbox::Entry)
+      end
+    end
+
+    it "returns nil if session#list returns nil (path is not a directory)" do
+      @session.stub(:list).and_return(nil)
+
+      @entry.list.should be_nil
     end
   end
 end
