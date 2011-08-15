@@ -46,11 +46,12 @@ module Dropbox
 
     #
     # @return [Array<Dropbox::Entry>|nil] returns nil, if path is not a directory
+    # @throw :not_a_directory
     # use Dropbox::API#list
 
     def list(options={})
       listing = @session.list(path, options)
-      return if listing.nil?
+      throw :not_a_directory if listing.nil?
 
       listing.map do |struct|
         self.class.new(@session, struct.path)
@@ -106,6 +107,27 @@ module Dropbox
 
     def link(options={})
       @session.link path, options
+    end
+
+    #
+    # @param options [Hash]
+    # @option [boolean] :force force to create new file instead of using cached one
+    # @return [Tempfile]
+    # @throw :not_a_file
+    def file(options={})
+      throw :not_a_file if directory?
+      return @cached_file if @cached_file && !options[:force]
+
+      file = Tempfile.new('downloaded', :encoding => "BINARY")
+      file.write download
+      file.rewind
+
+      @cached_file = file
+    end
+
+    # @return [Boolean]
+    def directory?
+      metadata.directory?
     end
 
     def inspect # :nodoc:

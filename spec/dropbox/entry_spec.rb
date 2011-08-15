@@ -216,10 +216,60 @@ describe Dropbox::Entry do
       end
     end
 
-    it "returns nil if session#list returns nil (path is not a directory)" do
+    it "should throw :not_a_directory if session#list returns nil (path is not a directory)" do
       @session.stub(:list).and_return(nil)
 
-      @entry.list.should be_nil
+      expect {@entry.list}.to throw_symbol :not_a_directory
+    end
+  end
+
+  describe "#file" do
+    it "returns a Tempfile object" do
+      @session.stub(:download).and_return("Sample file content")
+      @entry.stub(:directory?).and_return(false)
+
+      @entry.file.should be_instance_of(Tempfile)
+    end
+
+    it "returns a file with correct content" do
+      @session.stub(:download).and_return("Sample file content")
+      @entry.stub(:directory?).and_return(false)
+
+      @entry.file.read.should == "Sample file content"
+    end
+
+    it "should throw :not_a_file if path is not a file" do
+      @entry.should_receive(:directory?).once.and_return(true)
+
+      expect {@entry.file}.to throw_symbol :not_a_file
+    end
+
+    it "should return same file object if called twice" do
+      @session.stub(:download).and_return("Sample file content")
+      @entry.stub(:directory?).and_return(false)
+
+      @entry.file.should == @entry.file
+    end
+
+    it "should recreate file if called with :force = true" do
+      @session.stub(:download).and_return("Sample file content")
+      @entry.stub(:directory?).and_return(false)
+
+      @entry.file.should_not == @entry.file(:force => true)
+    end
+  end
+
+  describe "#directory?" do
+    it "should return true if path is a directory" do
+      @session.stub_chain(:metadata, :directory?).and_return(true)
+
+      @entry.directory?.should be_true
+    end
+
+    it "should return false if path is not a directory" do
+      @session.stub_chain(:metadata, :directory?).and_return(false)
+
+      @entry.directory?.should be_false
     end
   end
 end
