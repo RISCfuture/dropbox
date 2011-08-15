@@ -200,11 +200,11 @@ describe Dropbox::Entry do
 
     it "returns array of Entry objects" do
       result =
-      1.upto(5).inject([]) do |result, i|
+      1.upto(5).map do |i|
         struct = mock("struct#{i}")
         struct.stub(:path).and_return("/file#{i}")
 
-        result << struct
+        struct
       end
       @session.stub(:list).and_return(result)
 
