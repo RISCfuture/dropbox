@@ -23,13 +23,13 @@ describe Dropbox::Entry do
       @entry.metadata(:sandbox => true)
     end
 
-    it "should record prior responses and use them automatically" do
+    it "should cache prior responses and use them instead of querying Dropbox" do
       result = mock('result')
 
       @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
       @entry.metadata.should eql(result)
 
-      @session.should_receive(:metadata).once.with(@path, { :prior_response => result }).and_return(result)
+      @session.should_not_receive(:metadata)
       @entry.metadata.should eql(result)
     end
 
@@ -41,6 +41,42 @@ describe Dropbox::Entry do
 
       @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
       @entry.metadata(:force => true)
+    end
+  end
+
+  describe "#update_metadata" do
+    it "should delegate to the session and return the result" do
+      result = mock('result')
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+
+      @entry.update_metadata.should eql(result)
+    end
+
+    it "should pass along options" do
+      result = mock('result')
+      @session.should_receive(:metadata).once.with(@path, { :sandbox => true }).and_return(result)
+
+      @entry.update_metadata(:sandbox => true)
+    end
+
+    it "should record prior responses and use them automatically" do
+      result = mock('result')
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.update_metadata.should eql(result)
+
+      @session.should_receive(:metadata).once.with(@path, { :prior_response => result }).and_return(result)
+      @entry.update_metadata.should eql(result)
+    end
+
+    it "... unless :force is set to true" do
+      result = mock('result')
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.update_metadata
+
+      @session.should_receive(:metadata).once.with(@path, {}).and_return(result)
+      @entry.update_metadata(:force => true)
     end
   end
 
@@ -193,48 +229,60 @@ describe Dropbox::Entry do
   end
 
   describe "#list" do
-    it "should use the session#list" do
-      @session.should_receive(:list).and_return([])
-      @entry.list
+    context "entry is a directory" do
+      before(:each) do
+        @dir_metadata = mock('dir_metadata')
+        @dir_metadata.should_receive(:directory?).and_return(true)
+        @session.stub(:metadata).and_return(@dir_metadata)
+      end
+
+      it "returns directory objects" do
+        result =
+        1.upto(5).map do |i|
+          struct = mock("struct#{i}")
+          struct.stub(:path).and_return("/file#{i}")
+
+          struct
+        end
+        @dir_metadata.should_receive(:contents).and_return(result)
+
+        listing = @entry.list
+
+        listing.should have(5).objects
+        listing.each do |item|
+          item.should be_instance_of(Dropbox::Entry)
+        end
+      end
+
+      it "should set metadata for directory objects" do
+        file_metadata = stub('file_metadata')
+        file_metadata.stub(:path).and_return('/file')
+
+        @dir_metadata.should_receive(:contents).and_return([file_metadata])
+
+        listing = @entry.list
+        listing.should have(1).object
+
+        listing.first.metadata.should == file_metadata
+      end
     end
 
-    it "returns array of Entry objects" do
-      result =
-      1.upto(5).map do |i|
-        struct = mock("struct#{i}")
-        struct.stub(:path).and_return("/file#{i}")
-
-        struct
-      end
-      @session.stub(:list).and_return(result)
-
-      listing = @entry.list
-
-      listing.should have(5).objects
-      listing.each do |item|
-        item.should be_instance_of(Dropbox::Entry)
-      end
-    end
-
-    it "should throw :not_a_directory if session#list returns nil (path is not a directory)" do
-      @session.stub(:list).and_return(nil)
+    it "should throw :not_a_directory if path is not a directory" do
+      @session.stub_chain(:metadata, :directory?).and_return(false)
 
       expect {@entry.list}.to throw_symbol :not_a_directory
     end
   end
 
   describe "#file" do
-    it "returns a Tempfile object" do
+    before(:each) do
       @session.stub(:download).and_return("Sample file content")
       @entry.stub(:directory?).and_return(false)
-
-      @entry.file.should be_instance_of(Tempfile)
     end
+    specify{ @entry.file.should be_instance_of(Tempfile) }
+
 
     it "returns a file with correct content" do
-      @session.stub(:download).and_return("Sample file content")
-      @entry.stub(:directory?).and_return(false)
-
       @entry.file.read.should == "Sample file content"
     end
 
@@ -245,16 +293,10 @@ describe Dropbox::Entry do
     end
 
     it "should return same file object if called twice" do
-      @session.stub(:download).and_return("Sample file content")
-      @entry.stub(:directory?).and_return(false)
-
       @entry.file.should == @entry.file
     end
 
     it "should recreate file if called with :force = true" do
-      @session.stub(:download).and_return("Sample file content")
-      @entry.stub(:directory?).and_return(false)
-
       @entry.file.should_not == @entry.file(:force => true)
     end
   end
@@ -270,6 +312,18 @@ describe Dropbox::Entry do
       @session.stub_chain(:metadata, :directory?).and_return(false)
 
       @entry.directory?.should be_false
+    end
+  end
+
+  describe "#create_from_metadata" do
+    it "should set path and metadata to new Entry object" do
+      metadata = mock('metadata').as_null_object
+      metadata.should_receive(:path).at_least(1).times.and_return('/file')
+
+      entry = Dropbox::Entry.create_from_metadata(@session, metadata)
+
+      entry.path.should == metadata.path
+      entry.metadata.should == metadata
     end
   end
 end
