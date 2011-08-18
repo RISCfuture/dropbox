@@ -45,15 +45,13 @@ module Dropbox
     #                                         results. To download the full metadata set this to +true+.
     # @option (see Dropbox::Entry#update_metadata)
     def metadata(options={})
-      @metadata = nil if options.delete(:ignore_cache) or options[:force]
-      return @metadata if @metadata
+      @cached_metadata = nil if options.delete(:ignore_cache) or options[:force]
+      return @cached_metadata if @cached_metadata
 
       update_metadata(options)
     end
     alias :info :metadata
 
-    # Use this method to update cached @metadata hash
-    #
     # @param [Hash] options
     # @option options [Boolean] :force  Normally, subsequent calls to this method will use cached
     #                                   results if the file hasn't been changed. To download the full
@@ -61,11 +59,12 @@ module Dropbox
     #                                   +true+.
     #
     def update_metadata(options={})
+      @previous_metadata ||= @cached_metadata
+
       @previous_metadata = nil if options.delete(:force)
       @previous_metadata = @session.metadata path, (@previous_metadata ? options.merge(:prior_response => @previous_metadata) : options)
 
-      # Not sure about this. Maybe it should be in #metadata ?
-      @metadata = @previous_metadata
+      @cached_metadata = @previous_metadata
     end
 
     # @param [Struct] new_metadata
@@ -73,7 +72,7 @@ module Dropbox
       raise ArgumentError, "#{new_metadata.inspect} does not respond to #path" unless new_metadata.respond_to?(:path)
 
       @path = new_metadata.path
-      @metadata = new_metadata
+      @cached_metadata = new_metadata
     end
     alias :info= :metadata=
 

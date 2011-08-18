@@ -54,6 +54,7 @@ describe Dropbox::Entry do
   describe "#update_metadata" do
     before(:each) do
       @struct = stub('struct')
+      @struct.stub(:path).and_return('/path')
     end
     it "should delegate to the session and return the result" do
       @session.should_receive(:metadata).once.with(@path, {}).and_return(@struct)
@@ -84,6 +85,14 @@ describe Dropbox::Entry do
         # second call
         @session.should_receive(:metadata).once.with(@path, {}).and_return(@struct)
         @entry.update_metadata(:force => true).should eql @struct
+      end
+    end
+
+    describe "interaction with #metadata" do
+      it "should use cached metadata if prior responses not present" do
+        @entry.metadata = @struct
+        @session.should_receive(:metadata).once.with(@struct.path, { :prior_response => @struct }).and_return(@struct)
+        @entry.update_metadata.should eql(@struct)
       end
     end
   end
