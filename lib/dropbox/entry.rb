@@ -38,13 +38,14 @@ module Dropbox
       entry
     end
 
-    # Delegates to Dropbox::API#metadata. Additional options:
+    # Delegates to Dropbox::Entry#update_metadata. Use caching.
     #
-    # +force+:: Normally, subsequent calls to this method will use cached
-    #           results. To download the full metadata set this to +true+.
-
+    # @param [Hash] options
+    # @option options [Boolean] :ignore_cache Normally, subsequent calls to this method will use cached
+    #                                         results. To download the full metadata set this to +true+.
+    # @option (see Dropbox::Entry#update_metadata)
     def metadata(options={})
-      @metadata = nil if options.delete(:force)
+      @metadata = nil if options.delete(:ignore_cache) or options[:force]
       return @metadata if @metadata
 
       update_metadata(options)
@@ -60,8 +61,11 @@ module Dropbox
     #                                   +true+.
     #
     def update_metadata(options={})
-      @metadata = nil if options.delete(:force)
-      @metadata = @session.metadata path, (@metadata ? options.merge(:prior_response => @metadata) : options)
+      @previous_metadata = nil if options.delete(:force)
+      @previous_metadata = @session.metadata path, (@previous_metadata ? options.merge(:prior_response => @previous_metadata) : options)
+
+      # Not sure about this. Maybe it should be in #metadata ?
+      @metadata = @previous_metadata
     end
 
     # @param [Struct] new_metadata
@@ -79,13 +83,17 @@ module Dropbox
     # use Dropbox::API#list
 
     def list(options={})
-      ## load metadata first
-      #meta = metadata(options)
-
-      update_metadata(options)
+      # load metadata first
+      metadata(options)
       throw :not_a_directory unless directory?
 
-      metadata.contents.map do |struct|
+      begin
+        contents = metadata.contents
+      rescue NoMethodError
+        contents = metadata(options.merge(:ignore_cache => true)).contents
+      end
+
+      contents.map do |struct|
         self.class.create_from_metadata(@session, struct)
       end
     end
