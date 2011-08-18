@@ -150,7 +150,10 @@ module Dropbox
       throw :not_a_file if directory?
       return @cached_file if @cached_file && !options[:force]
 
-      file = Tempfile.new('downloaded', :encoding => "BINARY")
+      ext  = ::File.extname(path)
+      name = ::File.basename(path, ext)
+
+      file = Tempfile.new([name, ext], :encoding => "BINARY")
       file.write download
       file.rewind
 
