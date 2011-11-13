@@ -17,6 +17,7 @@ Jeweler::Tasks.new do |gem|
   gem.email = "dropbox@timothymorgan.info"
   gem.homepage = "http://github.com/RISCfuture/dropbox"
   gem.authors = [ "Tim Morgan" ]
+  gem.files = %w( lib/**/* examples ChangeLog dropbox.gemspec LICENSE README.rdoc )
 end
 Jeweler::RubygemsDotOrgTasks.new
 
