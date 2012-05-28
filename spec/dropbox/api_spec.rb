@@ -11,7 +11,6 @@ def should_receive_api_method_with_arguments(object, method, api_method, argumen
   object.should_receive(method).once do |url|
     front = url.split('?').first
     front.should eql("#{Dropbox::ALTERNATE_HOSTS[api_method] || Dropbox::HOST}/#{Dropbox::VERSION}/#{api_method}#{'/' + root if root}#{'/' + path if path}")
-
     query_params = url_args(url)
     query_params.each { |key, val| val.should eql(arguments[key.to_sym]) }
     arguments.each { |key, _| query_params.should include(key.to_s) }
@@ -423,6 +422,43 @@ describe Dropbox::API do
       @token_mock.stub!(:get).and_return(@response)
 
       @session.link(path)
+    end
+  end
+  
+  describe "#shares" do
+    before :each do
+      @response.stub!(:code).and_return(304)
+      response_acts_as Net::HTTPFound
+      @response.stub!(:[]).and_return("new location")
+    end
+    
+    it "should call the API method shares" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'shares', {}, @response, 'some/file', 'sandbox'
+      @session.shares 'some/file'
+    end
+    
+    it "should strip a leading slash" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'shares', {}, @response, 'some/file', 'sandbox'
+      @session.shares '/some/file'
+    end
+
+    it "should rescue 304's and return the Location header" do
+      should_receive_api_method_with_arguments @token_mock, :post, 'shares', {}, @response, 'some/file', 'sandbox'
+      lambda { @session.shares('some/file').should eql("new location") }.should_not raise_error
+    end
+
+    it "should re-raise other errors unmodified" do
+      response_acts_as nil
+      @token_mock.stub!(:post).and_return(@response)
+      lambda { @session.shares('a') }.should raise_error(Dropbox::UnsuccessfulResponseError)
+    end
+
+    it "should check the path" do
+      path = "source/path"
+      Dropbox.should_receive(:check_path).once.with(path).and_return(path)
+      @token_mock.stub!(:post).and_return(@response)
+
+      @session.shares(path)
     end
   end
 
