@@ -371,6 +371,28 @@ module Dropbox
       end
     end
     memoize :link
+    
+    # Creates and returns a shareable link to files or folders.
+    #
+    # The path is assumed to be relative to the configured mode's root.
+    #
+    # Options:
+    #
+    # +mode+:: Temporarily changes the API mode. See the MODES array.
+    
+    def shares(path, options={})
+      path = path.sub(/^\//, '')
+      rest = Dropbox.check_path(path).split('/')
+      
+      begin
+        return JSON.parse( api_response(:post, 'shares', root(options), *rest).body ).symbolize_keys_recursively
+      rescue UnsuccessfulResponseError => error
+        return error.response['Location'] if error.response.kind_of?(Net::HTTPFound)
+        #TODO shouldn't be using rescue blocks for normal program flow
+        raise error
+      end
+    end
+    memoize :shares
 
     # Returns a +Struct+ containing metadata on a given file or folder. The path
     # is assumed to be relative to the configured mode's root.
